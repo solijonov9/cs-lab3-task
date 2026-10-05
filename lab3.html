@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Engineering & Phishing Analysis Briefing and Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+        try { if (localStorage.getItem('lab_theme') === 'light') document.documentElement.classList.remove('dark'); } catch (e) {}
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .mono { font-family: 'Courier New', Courier, monospace; }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
+
+    <!-- LOGIN MODAL -->
+    <div id="login-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-5">
+            <div class="flex items-center gap-2 justify-end">
+                    <div class="flex bg-slate-200 dark:bg-slate-900 p-1 rounded-lg border border-slate-300 dark:border-slate-700">
+                        <button type="button" data-lang="uz" onclick="setLang('uz')">UZ</button>
+                        <button type="button" data-lang="en" onclick="setLang('en')">EN</button>
+                    </div>
+                    <button type="button" data-theme-btn onclick="toggleTheme()" title="Day / Night" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-emerald-500 transition"></button>
+                </div>
+            <div class="text-center space-y-2">
+                <div class="inline-flex p-3 bg-emerald-500/10 text-emerald-500 rounded-full mb-1">
+                    <i class="fa-solid fa-user-shield text-3xl"></i>
+                </div>
+                <h2 class="text-xl font-bold">Laboratoriyaga Kirish</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Social Engineering & Phishing Analysis</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-slate-600 dark:text-slate-400 mb-1 font-semibold">Ism va Familiya</label>
+                    <input type="text" id="inputFullname" required placeholder="Masalan: Ali Valiyev" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-slate-600 dark:text-slate-400 mb-1 font-semibold">Guruh Raqami</label>
+                    <input type="text" id="inputGroup" required placeholder="Masalan: 210-20" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500">
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg shadow-lg transition text-xs flex items-center justify-center gap-2">
+                    <span>Laboratoriyaga Kirish</span> <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-shield-halved text-emerald-500 text-2xl"></i>
+                <div>
+                    <h1 class="text-lg font-bold tracking-wide">Social Engineering & Phishing Analysis</h1>
+                    <div id="user-badge" class="hidden text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-user-check"></i> <span id="user-display"></span>
+                        <span id="timer-badge" title="Ishlagan vaqt" class="ml-1 px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-mono text-slate-700 dark:text-slate-200 flex items-center gap-1"><i class="fa-regular fa-clock"></i> <span id="timer-display">00:00:00</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div class="flex items-center flex-wrap justify-center gap-3">
+                <div class="flex items-center gap-2 ">
+                    <div class="flex bg-slate-200 dark:bg-slate-900 p-1 rounded-lg border border-slate-300 dark:border-slate-700">
+                        <button type="button" data-lang="uz" onclick="setLang('uz')">UZ</button>
+                        <button type="button" data-lang="en" onclick="setLang('en')">EN</button>
+                    </div>
+                    <button type="button" data-theme-btn onclick="toggleTheme()" title="Day / Night" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-emerald-500 transition"></button>
+                </div>
+                <div class="bg-slate-200 dark:bg-slate-900 p-1 rounded-lg flex border border-slate-300 dark:border-slate-700">
+                    <button id="btn-tab-briefing" onclick="switchTab('briefing')" class="px-4 py-1.5 rounded-md text-xs font-semibold bg-emerald-500 text-white shadow transition">
+                        <i class="fa-solid fa-chalkboard-user mr-1"></i> Briefing
+                    </button>
+                    <button id="btn-tab-qa" onclick="switchTab('qa')" class="px-4 py-1.5 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
+                        <i class="fa-solid fa-circle-question mr-1"></i> Q&A
+                    </button>
+                    <button id="btn-tab-lab" onclick="switchTab('lab')" class="px-4 py-1.5 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
+                        <i class="fa-solid fa-terminal mr-1"></i> Practical Lab
+                    </button>
+                    <button id="btn-tab-result" onclick="switchTab('result')" class="px-4 py-1.5 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
+                        <i class="fa-solid fa-square-poll-vertical mr-1"></i> Results <i id="res-lock" class="fa-solid fa-lock ml-1 text-[10px] opacity-70"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-5xl w-full mx-auto p-4 md:p-6">
+
+        <!-- TAB 1: BRIEFING -->
+        <div id="tab-content-briefing" class="space-y-8">
+            
+            <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-lg">
+                <h2 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-book-open"></i> Ijtimoiy Muhandislik va Phishing Tahlili (Briefing)
+                </h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 pb-4">
+                    Amaliy ko'nikmalar rejasiga muvofiq, bosqichma-bosqich ta'riflar va real misollar bilan tanishing.
+                </p>
+
+                <!-- SECTION 1: EXAMINE PREPARED EXAMPLES -->
+                <div class="mt-6 space-y-8">
+                    <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+                        <i class="fa-solid fa-microscope text-emerald-500"></i> 1. Examine Prepared Phishing, Smishing and Impersonation Examples
+                    </h3>
+
+                    <!-- 1.1 PHISHING -->
+                    <div class="space-y-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <h4 class="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                            <i class="fa-solid fa-envelope"></i> 1.1 Phishing (E-mail orqali hujum)
+                        </h4>
+                        <div class="text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                            <p><b>Ta'rifi:</b> Phishing — hujumchilar tomonidan ishonchli tashkilotlar nomidan soxta elektron pochta xatlari yuborib, maxfiy parollarni o'g'irlash usuli.</p>
+                            <p><b>Qanday amalga oshiriladi?</b> Foydalanuvchiga shoshilinch xabar yuboriladi, xat tarkibida soxta havola yoki zararlangan fayl bo'ladi.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                            <div class="bg-white dark:bg-slate-950 p-3 rounded-lg border-l-4 border-emerald-500 text-xs">
+                                <span class="bg-emerald-500/10 text-emerald-500 font-bold px-2 py-0.5 rounded text-[10px]">LEGITIMATE EMAIL</span>
+                                <div class="mt-2 space-y-1">
+                                    <div><b>Kimdan:</b> <code class="mono text-emerald-600">support@payme.uz</code></div>
+                                    <div><b>Mavzu:</b> Oylik hisobot va chek</div>
+                                    <p class="text-slate-500 text-[11px] pt-1">Hizmatdan foydalanganingiz uchun tashakkur. Hisob chekingiz ilova qilindi.</p>
+                                </div>
+                            </div>
+                            <div class="bg-white dark:bg-slate-950 p-3 rounded-lg border-l-4 border-rose-500 text-xs">
+                                <span class="bg-rose-500/10 text-rose-500 font-bold px-2 py-0.5 rounded text-[10px]">PHISHING EMAIL</span>
+                                <div class="mt-2 space-y-1">
+                                    <div><b>Kimdan:</b> <code class="mono text-rose-500">payme-security@mail-verify.com</code></div>
+                                    <div><b>Mavzu:</b> Xavf! Kartangiz muzlatildi!</div>
+                                    <p class="text-slate-500 text-[11px] pt-1">24 soat ichida kirmasangiz kartangiz bloklanadi: <span class="text-blue-500 underline mono">http://payme.login-check.com</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1.2 SMISHING -->
+                    <div class="space-y-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <h4 class="text-sm font-bold text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-comment-sms"></i> 1.2 Smishing (SMS Phishing)
+                        </h4>
+                        <div class="text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                            <p><b>Ta'rifi:</b> Smishing — SMS yoki xabar almashish ilovalari (Telegram, WhatsApp) orqali amalga oshiriladigan phishing turi.</p>
+                            <p><b>Qanday amalga oshiriladi?</b> Posilka, yutuq yoki bank kartasi bloklangani haqida soxta to'lov havolasi ko'rsatilgan qisqa xabar yuboriladi.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                            <div class="bg-white dark:bg-slate-950 p-3 rounded-lg border-l-4 border-emerald-500 text-xs">
+                                <span class="bg-emerald-500/10 text-emerald-500 font-bold px-2 py-0.5 rounded text-[10px]">LEGITIMATE SMS</span>
+                                <div class="mt-2 space-y-1">
+                                    <div><b>Kimdan:</b> <span class="font-bold">UzPost</span></div>
+                                    <p class="text-slate-500 text-[11px] pt-1">Sizning posilangiz pochtaga yetib keldi. Olib ketishingiz mumkin. Ma'lumot: uzpost.uz</p>
+                                </div>
+                            </div>
+                            <div class="bg-white dark:bg-slate-950 p-3 rounded-lg border-l-4 border-rose-500 text-xs">
+                                <span class="bg-rose-500/10 text-rose-500 font-bold px-2 py-0.5 rounded text-[10px]">SMISHING SMS</span>
+                                <div class="mt-2 space-y-1">
+                                    <div><b>Kimdan:</b> <code class="mono text-rose-500">+998 90 999 88 77</code></div>
+                                    <p class="text-slate-500 text-[11px] pt-1">Posilka omborda to'xtatildi. Manzil va $2 to'lovni tasdiqlang: <span class="text-blue-500 underline mono">post-track.click/uz</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1.3 IMPERSONATION -->
+                    <div class="space-y-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <h4 class="text-sm font-bold text-sky-600 dark:text-sky-400 flex items-center gap-2">
+                            <i class="fa-solid fa-user-ninja"></i> 1.3 Impersonation (Soxta Shaxs Niqobi)
+                        </h4>
+                        <div class="text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                            <p><b>Ta'rifi:</b> Impersonation — Hujumchining o'zini rahbar (CEO), IT xodimi yoki hamkor sifatida ko'rsatishi.</p>
+                            <p><b>Qanday amalga oshiriladi?</b> Telegramda soxta profil ochib zudlik bilan pul o'tkazishni yoki SMS kodni aytishni so'raydi.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                            <div class="bg-white dark:bg-slate-950 p-3 rounded-lg border-l-4 border-emerald-500 text-xs">
+                                <span class="bg-emerald-500/10 text-emerald-500 font-bold px-2 py-0.5 rounded text-[10px]">LEGITIMATE REQUEST</span>
+                                <div class="mt-2 space-y-1">
+                                    <div><b>Kanal:</b> Rasmiy Korporativ Pochta</div>
+                                    <p class="text-slate-500 text-[11px] pt-1">Hormatli xodimlar, rejadagi IT profilaktika bugun soat 22:00 da boshlanadi.</p>
+                                </div>
+                            </div>
+                            <div class="bg-white dark:bg-slate-950 p-3 rounded-lg border-l-4 border-rose-500 text-xs">
+                                <span class="bg-rose-500/10 text-rose-500 font-bold px-2 py-0.5 rounded text-[10px]">IMPERSONATION</span>
+                                <div class="mt-2 space-y-1">
+                                    <div><b>Kanal:</b> Shaxsiy Telegram Chat</div>
+                                    <p class="text-slate-500 text-[11px] pt-1">"Men direktorman. Zudlik bilan audit uchun ushbu hisobga to'lov o'tkazing!"</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: WARNING SIGNS -->
+                <div class="mt-8 space-y-4 pt-6 border-t border-slate-200 dark:border-slate-700">
+                    <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> 2. Identify Warning Signs (Xavf Belgilari)
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <b class="text-amber-500 block mb-1">1. Shoshilinchlik (Urgency)</b>
+                            <p class="text-slate-600 dark:text-slate-300">"Darhol bajaring", "Kartangiz bloklanadi" kabi ruhiy bosim iboralari.</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <b class="text-amber-500 block mb-1">2. Mos Kelmaydigan Manzillar</b>
+                            <p class="text-slate-600 dark:text-slate-300">Tashkilot nomi va yuboruvchining e-mail domeni mos emasligi.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: DOMAINS -->
+                <div class="mt-8 space-y-4 pt-6 border-t border-slate-200 dark:border-slate-700">
+                    <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-link text-sky-500"></i> 3. Recognize Suspicious Links, Domains and Messages
+                    </h3>
+                    <div class="space-y-2 text-xs font-mono">
+                        <div class="p-2.5 bg-slate-50 dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700 flex justify-between">
+                            <span><b>Typosquatting:</b> g00gle.com / paynme.uz</span>
+                            <span class="text-rose-400">✕ Soxta</span>
+                        </div>
+                        <div class="p-2.5 bg-slate-50 dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700 flex justify-between">
+                            <span><b>Subdomain Trick:</b> login.facebook.com.verify-security.info</span>
+                            <span class="text-rose-400">✕ Soxta</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 4: TECHNIQUES -->
+                <div class="mt-8 space-y-4 pt-6 border-t border-slate-200 dark:border-slate-700">
+                    <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-sitemap text-indigo-500"></i> 4. Classify Social-Engineering Techniques
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <b class="text-indigo-500 block">Spear Phishing / Whaling</b>
+                            <p class="text-slate-600 dark:text-slate-300">Aniq bir shaxsga yoki yuqori lavozimli rahbarlarga qaratilgan hujum.</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <b class="text-indigo-500 block">Baiting / Pretexting</b>
+                            <p class="text-slate-600 dark:text-slate-300">Tuzoq qo'yish yoki soxta ssenariylar orqali ishonchga kirish.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 5: RESPONSES -->
+                <div class="mt-8 space-y-4 pt-6 border-t border-slate-200 dark:border-slate-700">
+                    <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <i class="fa-solid fa-user-shield text-emerald-500"></i> 5. Determine User Responses & Preventive Measures
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div class="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-1">
+                            <h4 class="font-bold text-emerald-600 dark:text-emerald-400">User Responses:</h4>
+                            <p class="text-slate-600 dark:text-slate-300">• Linklarni bosmaslik, SOC/IT bo'limiga "Report Phishing" qilish.</p>
+                        </div>
+                        <div class="p-4 bg-sky-500/10 border border-sky-500/30 rounded-xl space-y-1">
+                            <h4 class="font-bold text-sky-600 dark:text-sky-400">Preventive Measures:</h4>
+                            <p class="text-slate-600 dark:text-slate-300">• MFA / 2FA yoqish, SPF/DKIM sozlash, muntazam treninglar.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-slate-200 dark:border-slate-700 text-right">
+                    <button onclick="switchTab('qa')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-2.5 rounded-lg text-xs transition inline-flex items-center gap-2 shadow-lg">
+                        <span>Amaliy Laboratoriyaga O'tish</span> <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- TAB 2: Q&A -->
+        <div id="tab-content-qa" class="hidden space-y-6">
+            <div id="qa-root" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 shadow-lg space-y-6"></div>
+        </div>
+
+        <!-- TAB 3: PRACTICAL LAB (Linux) -->
+        <div id="tab-content-lab" class="hidden space-y-6">
+            <div id="pl-root" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 shadow-lg space-y-6"></div>
+        </div>
+
+        <!-- TAB 4: NATIJALAR -->
+        <div id="tab-content-result" class="hidden space-y-6">
+            <div id="res-root" class="space-y-4"></div>
+        </div>
+
+    </main>
+
+    <script>
+const EN = {
+ "Laboratoriyaga Kirish": "Lab Login",
+ "Ism va Familiya": "Full Name",
+ "Guruh Raqami": "Group Number",
+ "Ijtimoiy Muhandislik va Phishing Tahlili (Briefing)": "Social Engineering and Phishing Analysis (Briefing)",
+ "Amaliy ko'nikmalar rejasiga muvofiq, bosqichma-bosqich ta'riflar va real misollar bilan tanishing.": "Review step-by-step definitions and real examples in line with the practical skills plan.",
+ "1.1 Phishing (E-mail orqali hujum)": "1.1 Phishing (Email-based attack)",
+ "Ta'rifi:": "Definition:",
+ "Phishing — hujumchilar tomonidan ishonchli tashkilotlar nomidan soxta elektron pochta xatlari yuborib, maxfiy parollarni o'g'irlash usuli.": "Phishing is a method where attackers send fake emails in the name of trusted organizations to steal confidential passwords.",
+ "Qanday amalga oshiriladi?": "How is it carried out?",
+ "Foydalanuvchiga shoshilinch xabar yuboriladi, xat tarkibida soxta havola yoki zararlangan fayl bo'ladi.": "The user receives an urgent message; the email contains a fake link or an infected file.",
+ "Kimdan:": "From:",
+ "Mavzu:": "Subject:",
+ "Oylik hisobot va chek": "Monthly report and receipt",
+ "Hizmatdan foydalanganingiz uchun tashakkur. Hisob chekingiz ilova qilindi.": "Thank you for using our service. Your receipt is attached.",
+ "Xavf! Kartangiz muzlatildi!": "Danger! Your card has been frozen!",
+ "24 soat ichida kirmasangiz kartangiz bloklanadi:": "If you don't log in within 24 hours, your card will be blocked:",
+ "Smishing — SMS yoki xabar almashish ilovalari (Telegram, WhatsApp) orqali amalga oshiriladigan phishing turi.": "Smishing is a type of phishing carried out via SMS or messaging apps (Telegram, WhatsApp).",
+ "Posilka, yutuq yoki bank kartasi bloklangani haqida soxta to'lov havolasi ko'rsatilgan qisqa xabar yuboriladi.": "A short message is sent with a fake payment link about a parcel, a prize, or a blocked bank card.",
+ "Sizning posilangiz pochtaga yetib keldi. Olib ketishingiz mumkin. Ma'lumot: uzpost.uz": "Your parcel has arrived at the post office. You can pick it up. Info: uzpost.uz",
+ "Posilka omborda to'xtatildi. Manzil va $2 to'lovni tasdiqlang:": "The parcel is held at the warehouse. Confirm your address and the $2 payment:",
+ "1.3 Impersonation (Soxta Shaxs Niqobi)": "1.3 Impersonation (Fake Identity Disguise)",
+ "Impersonation — Hujumchining o'zini rahbar (CEO), IT xodimi yoki hamkor sifatida ko'rsatishi.": "Impersonation is when an attacker poses as a manager (CEO), IT staff, or a partner.",
+ "Telegramda soxta profil ochib zudlik bilan pul o'tkazishni yoki SMS kodni aytishni so'raydi.": "Opens a fake profile on Telegram and urgently asks for a money transfer or an SMS code.",
+ "Kanal:": "Channel:",
+ "Rasmiy Korporativ Pochta": "Official Corporate Email",
+ "Hormatli xodimlar, rejadagi IT profilaktika bugun soat 22:00 da boshlanadi.": "Dear colleagues, the scheduled IT maintenance starts today at 22:00.",
+ "Shaxsiy Telegram Chat": "Personal Telegram Chat",
+ "\"Men direktorman. Zudlik bilan audit uchun ushbu hisobga to'lov o'tkazing!\"": "\"I am the director. Transfer a payment to this account immediately for the audit!\"",
+ "2. Identify Warning Signs (Xavf Belgilari)": "2. Identify Warning Signs",
+ "1. Shoshilinchlik (Urgency)": "1. Urgency",
+ "\"Darhol bajaring\", \"Kartangiz bloklanadi\" kabi ruhiy bosim iboralari.": "Pressure phrases such as \"Do it immediately\" and \"Your card will be blocked\".",
+ "2. Mos Kelmaydigan Manzillar": "2. Mismatched Addresses",
+ "Tashkilot nomi va yuboruvchining e-mail domeni mos emasligi.": "The organization name does not match the sender's email domain.",
+ "✕ Soxta": "✕ Fake",
+ "Aniq bir shaxsga yoki yuqori lavozimli rahbarlarga qaratilgan hujum.": "An attack aimed at a specific person or senior executives.",
+ "Tuzoq qo'yish yoki soxta ssenariylar orqali ishonchga kirish.": "Gaining trust through traps or fake scenarios.",
+ "• Linklarni bosmaslik, SOC/IT bo'limiga \"Report Phishing\" qilish.": "• Don't click links; report it via \"Report Phishing\" to the SOC/IT department.",
+ "• MFA / 2FA yoqish, SPF/DKIM sozlash, muntazam treninglar.": "• Enable MFA / 2FA, configure SPF/DKIM, run regular training.",
+ "Amaliy Laboratoriyaga O'tish": "Go to Practical Lab"
+};
+// ===================== Sozlamalar / State =====================
+// E'tibor: Google Apps Script deploy havolangizni shu yerga qo'ying (YOUR_SCRIPT_ID o'rniga).
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuWNqkCwTZKWfSt54PDYJUvYGyetxadnI-nYX7TVBqOLgmU6KzK1-qwhVAxH1HSmUQ/exec";
+let studentData = { fullname: "", group: "" };
+let startTime = null, stoppedAt = null, timerId = null;
+function elapsedSec() { return startTime ? Math.floor(((stoppedAt || Date.now()) - startTime) / 1000) : 0; }
+function fmtTime(sec) { const p = n => String(n).padStart(2, '0'); return p(Math.floor(sec / 3600)) + ':' + p(Math.floor(sec % 3600 / 60)) + ':' + p(sec % 60); }
+function fmtHuman(sec) {
+    const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), x = sec % 60;
+    return lang === 'en' ? (h + ' h ' + m + ' min ' + x + ' s') : (h + ' soat ' + m + ' daqiqa ' + x + ' soniya');
+}
+function timerTick() {
+    if (!stoppedAt && resultsReady()) { stoppedAt = Date.now(); syncStatsToSheet(); }
+    const el = document.getElementById('timer-display');
+    if (el) el.textContent = fmtTime(elapsedSec());
+}
+function startTimer() {
+    if (startTime) return;
+    startTime = Date.now();
+    timerTick();
+    timerId = setInterval(timerTick, 1000);
+}
+let lang = 'uz', theme = 'dark';
+try { lang = localStorage.getItem('lab_lang') || 'uz'; theme = localStorage.getItem('lab_theme') || 'dark'; } catch (e) {}
+
+const pick = x => Array.isArray(x) ? x[lang === 'en' ? 1 : 0] : x;
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// ---- Natijalarni yig'ish: Jami urinishlar / To'g'ri / Noto'g'ri / Hintlar (QA + Practical Lab) ----
+function collectStats() {
+    let attempts = 0, correct = 0, wrong = 0, hints = 0;
+    if (typeof LABS !== 'undefined' && LABS.qa) {
+        LABS.qa.tasks.forEach((t, i) => {
+            const st = LABS.qa.state[i];
+            if (st.done) { attempts++; if (isCorrect('qa', i)) correct++; else wrong++; }
+        });
+    }
+    if (typeof PL2_TASKS !== 'undefined') {
+        PL2_TASKS.forEach((t, i) => {
+            const st = pl2.state[i];
+            const a = (st.qVal.trim() ? 1 : 0) + (st.flagVal.trim() ? 1 : 0), c = (pl2QOk(i) ? 1 : 0) + (pl2FlagOk(i) ? 1 : 0);
+            attempts += a; correct += c; wrong += a - c;
+            hints += st.hintsUsed;
+        });
+    }
+    return { attempts, correct, wrong, hints };
+}
+
+function sheetScores() {
+    const qn = LABS.qa.tasks.length, pn = PL2_TASKS.length * 2;
+    let qc = 0, pc = 0;
+    LABS.qa.tasks.forEach((t, i) => { if (LABS.qa.state[i].done && isCorrect('qa', i)) qc++; });
+    PL2_TASKS.forEach((t, i) => { pc += (pl2QOk(i) ? 1 : 0) + (pl2FlagOk(i) ? 1 : 0); });
+    return { qc, qn, pc, pn, tc: qc + pc, tn: qn + pn };
+}
+function syncStatsToSheet() {
+    if (!studentData.fullname) return;
+    if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("YOUR_SCRIPT_ID")) return;
+    const r = sheetScores();
+    const d = new Date();
+    const p = n => String(n).padStart(2, '0');
+    const dateStr = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+            date: dateStr, group: studentData.group, fullname: studentData.fullname,
+            qaCorrect: r.qc, qaTotal: r.qn, qaScore: r.qc + ' / ' + r.qn,
+            labCorrect: r.pc, labTotal: r.pn, labScore: r.pc + ' / ' + r.pn,
+            totalCorrect: r.tc, totalTotal: r.tn, totalScore: r.tc + ' / ' + r.tn,
+            timeSpent: fmtTime(elapsedSec()), minutes: Math.round(elapsedSec() / 60),
+            status: resultsReady() ? 'Tugatdi' : 'Jarayonda'
+        })
+    }).catch(err => console.error("Sheets export error:", err));
+}
+// Eski chaqiruvlar (logActivity(...)) endi shunchaki jadvalni yangilaydi — matn parametri faqat konsolga mo'ljallangan.
+function logActivity(text) { syncStatsToSheet(); }
+
+function handleLogin(event) {
+    event.preventDefault();
+    studentData.fullname = document.getElementById('inputFullname').value;
+    studentData.group = document.getElementById('inputGroup').value;
+    document.getElementById('user-display').innerText = studentData.fullname + " (" + studentData.group + ")";
+    document.getElementById('user-badge').classList.remove('hidden');
+    document.getElementById('login-modal').classList.add('hidden');
+    startTimer();
+    syncStatsToSheet();
+}
+
+function switchTab(tab) {
+    const on = "px-4 py-1.5 rounded-md text-xs font-semibold bg-emerald-500 text-white shadow transition";
+    const off = "px-4 py-1.5 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition";
+    ['briefing', 'qa', 'lab', 'result'].forEach(t => {
+        document.getElementById('tab-content-' + t).classList.toggle('hidden', t !== tab);
+        document.getElementById('btn-tab-' + t).className = t === tab ? on : off;
+    });
+    updateResLock();
+    if (tab === 'result') renderResultTab();
+}
+
+// ===================== Day / Night + UZ / EN =====================
+function setTheme(th) {
+    theme = th;
+    document.documentElement.classList.toggle('dark', th === 'dark');
+    document.querySelectorAll('[data-theme-btn]').forEach(b => {
+        b.innerHTML = th === 'dark'
+            ? '<i class="fa-solid fa-moon mr-1"></i>' + (lang === 'en' ? 'Night' : 'Tun')
+            : '<i class="fa-solid fa-sun mr-1"></i>' + (lang === 'en' ? 'Day' : 'Kun');
+    });
+    try { localStorage.setItem('lab_theme', th); } catch (e) {}
+}
+function toggleTheme() { setTheme(theme === 'dark' ? 'light' : 'dark'); }
+
+function setLang(l) {
+    lang = l;
+    document.documentElement.lang = l;
+    document.querySelectorAll('[data-lang]').forEach(b => {
+        const on = b.dataset.lang === l;
+        b.className = 'px-2.5 py-1 rounded-md text-xs font-bold transition ' + (on ? 'bg-emerald-500 text-white shadow' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white');
+    });
+    document.getElementById('inputFullname').placeholder = l === 'en' ? 'e.g. Ali Valiyev' : 'Masalan: Ali Valiyev';
+    document.getElementById('inputGroup').placeholder = l === 'en' ? 'e.g. 210-20' : 'Masalan: 210-20';
+    setTheme(theme);
+    applyStaticI18n();
+    renderAllLabs();
+    try { localStorage.setItem('lab_lang', l); } catch (e) {}
+}
+
+function applyStaticI18n() {
+    const managed = ['qa-root', 'qa-lab-results', 'pl-root', 'pl-lab-results', 'res-root'].map(id => document.getElementById(id)).filter(Boolean);
+    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = w.nextNode())) {
+        const p = n.parentNode;
+        if (!p || /^(SCRIPT|STYLE)$/.test(p.nodeName) || managed.some(el => el.contains(n))) continue;
+        if (n.__uz === undefined) n.__uz = n.nodeValue;
+        const orig = n.__uz, key = orig.replace(/\s+/g, ' ').trim();
+        if (lang === 'en' && EN[key]) {
+            n.nodeValue = orig.match(/^\s*/)[0] + EN[key] + orig.match(/\s*$/)[0];
+        } else if (n.nodeValue !== orig) {
+            n.nodeValue = orig;
+        }
+    }
+}
+
+// ===================== SVG "skrinshot" generatorlari =====================
+function wrap(text, n) {
+    const out = []; let cur = '';
+    text.split(/\s+/).forEach(w => {
+        if ((cur + ' ' + w).trim().length > n && cur) { out.push(cur); cur = w; } else { cur = (cur + ' ' + w).trim(); }
+    });
+    if (cur) out.push(cur);
+    return out;
+}
+const svgURI = svg => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+const T = (uz, en) => (lang === 'en' ? en : uz);
+
+function emailSVG(f) {
+    const W = 600, name = pick(f.name), subj = pick(f.subj);
+    let s = [];
+    s.push(`<rect width="${W}" height="1200" fill="#fff"/><rect width="${W}" height="34" fill="#f1f3f4"/>`);
+    ['#ff5f57', '#febc2e', '#28c840'].forEach((c, i) => s.push(`<circle cx="${18 + i * 18}" cy="17" r="5" fill="${c}"/>`));
+    s.push(`<text x="84" y="21" font-size="11" fill="#5f6368">${T('Kiruvchi xatlar - Pochta', 'Inbox - Mail')}</text>`);
+    s.push(`<text x="20" y="66" font-size="16" font-weight="bold" fill="#202124">${esc(subj)}</text>`);
+    s.push(`<circle cx="34" cy="106" r="16" fill="#9aa0a6"/><text x="34" y="111" font-size="14" fill="#fff" text-anchor="middle">${esc(name[0])}</text>`);
+    s.push(`<text x="60" y="103" font-size="13" font-weight="bold" fill="#202124">${esc(name)}</text>`);
+    s.push(`<text x="60" y="120" font-size="12" fill="#5f6368">&lt;${esc(f.addr)}&gt;</text>`);
+    s.push(`<text x="60" y="136" font-size="12" fill="#5f6368">${T('Kimga:', 'To:')} ${esc(pick(f.to || ['Siz', 'You']))}</text>`);
+    s.push(`<text x="580" y="103" font-size="11" fill="#5f6368" text-anchor="end">${T('Bugun, 09:41', 'Today, 09:41')}</text>`);
+    s.push(`<line x1="20" y1="150" x2="580" y2="150" stroke="#e0e0e0"/>`);
+    let y = 178;
+    s.push(`<text x="24" y="${y}" font-size="13" fill="#202124">${esc(pick(f.greet))}</text>`);
+    y += 24;
+    wrap(pick(f.body), 76).forEach(ln => { s.push(`<text x="24" y="${y}" font-size="13" fill="#3c4043">${esc(ln)}</text>`); y += 20; });
+    y += 10;
+    if (f.btn) {
+        const b = pick(f.btn), bw = 24 + b.length * 8;
+        s.push(`<rect x="24" y="${y}" width="${bw}" height="36" rx="5" fill="${f.color || '#1a73e8'}"/><text x="${24 + bw / 2}" y="${y + 23}" font-size="13" font-weight="bold" fill="#fff" text-anchor="middle">${esc(b)}</text>`);
+        y += 56;
+    }
+    if (f.attach) {
+        s.push(`<rect x="24" y="${y}" width="250" height="30" rx="4" fill="#f8f9fa" stroke="#dadce0"/><text x="36" y="${y + 19}" font-size="12" fill="#3c4043">${T('Ilova:', 'Attachment:')} ${esc(f.attach)}</text>`);
+        y += 46;
+    }
+    let H = y + 16;
+    if (f.status) { H += 26; s.push(`<rect x="0" y="${H - 26}" width="${W}" height="26" fill="#f1f3f4"/><text x="12" y="${H - 9}" font-size="11" fill="#202124" font-family="Courier New, monospace">${esc(f.status)}</text>`); }
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="Arial, Helvetica, sans-serif">` + s.join('').replace('height="1200"', `height="${H}"`) + '</svg>';
+}
+
+function smsSVG(f) {
+    const W = 600, name = pick(f.name);
+    const lines = wrap(pick(f.text), 50), tl = f.tail ? wrap(pick(f.tail), 50) : [];
+    const n = lines.length + (f.link ? 1 : 0) + tl.length, bh = 24 + n * 21 + 12, H = 150 + bh + 30;
+    let s = [`<rect width="${W}" height="${H}" fill="#fff"/><rect width="${W}" height="70" fill="#f6f6f8"/><line x1="0" y1="70" x2="${W}" y2="70" stroke="#d8d8dc"/>`];
+    s.push(`<circle cx="38" cy="35" r="20" fill="#b0b4bb"/><text x="38" y="41" font-size="17" fill="#fff" text-anchor="middle">${/[A-Za-z]/.test(name[0]) ? esc(name[0]) : '#'}</text>`);
+    s.push(`<text x="70" y="30" font-size="15" font-weight="bold" fill="#202124">${esc(name)}</text><text x="70" y="50" font-size="12" fill="#6b6f76">${esc(pick(f.sub))}</text>`);
+    s.push(`<text x="${W / 2}" y="102" font-size="12" fill="#8a8d93" text-anchor="middle">${esc(pick(f.when || ['Bugun, 10:12', 'Today, 10:12']))}</text>`);
+    s.push(`<rect x="24" y="118" width="540" height="${bh}" rx="18" fill="#e9e9ed"/>`);
+    let y = 148;
+    lines.forEach(l => { s.push(`<text x="42" y="${y}" font-size="14" fill="#202124">${esc(l)}</text>`); y += 21; });
+    if (f.link) { s.push(`<text x="42" y="${y}" font-size="14" fill="#1a5fd0" text-decoration="underline">${esc(f.link)}</text>`); y += 21; }
+    tl.forEach(l => { s.push(`<text x="42" y="${y}" font-size="14" fill="#202124">${esc(l)}</text>`); y += 21; });
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="Arial, Helvetica, sans-serif">` + s.join('') + '</svg>';
+}
+
+function urlSVG(f) {
+    const W = 600, H = 320, https = f.url.startsWith('https');
+    let s = [`<rect width="${W}" height="${H}" fill="#fff"/><rect width="${W}" height="36" fill="#dee1e6"/>`];
+    ['#ff5f57', '#febc2e', '#28c840'].forEach((c, i) => s.push(`<circle cx="${18 + i * 18}" cy="18" r="5" fill="${c}"/>`));
+    s.push(`<rect x="86" y="6" width="220" height="30" rx="8" fill="#fff"/><text x="98" y="26" font-size="12" fill="#3c4043">${esc(pick(f.tab))}</text>`);
+    s.push(`<rect x="0" y="36" width="${W}" height="46" fill="#fff"/><rect x="16" y="44" width="568" height="32" rx="16" fill="#f1f3f4"/>`);
+    if (https) {
+        s.push(`<rect x="32" y="56" width="11" height="9" rx="1.5" fill="#188038"/><path d="M34.5 56 v-3 a3 3 0 0 1 6 0 v3" stroke="#188038" stroke-width="1.6" fill="none"/>`);
+    } else {
+        s.push(`<text x="30" y="65" font-size="11" font-weight="bold" fill="#d93025">${T('Xavfsiz emas', 'Not secure')}</text>`);
+    }
+    s.push(`<text x="${https ? 54 : 112}" y="65" font-size="14" fill="#202124" font-family="Courier New, monospace">${esc(f.url)}</text>`);
+    s.push(`<line x1="0" y1="82" x2="${W}" y2="82" stroke="#e0e0e0"/>`);
+    s.push(`<text x="40" y="132" font-size="20" font-weight="bold" fill="#202124">${esc(pick(f.head))}</text>`);
+    s.push(`<rect x="40" y="152" width="320" height="10" rx="5" fill="#eceff1"/><rect x="40" y="172" width="240" height="10" rx="5" fill="#eceff1"/>`);
+    s.push(`<rect x="40" y="200" width="300" height="34" rx="6" fill="#fff" stroke="#c9ccd1"/><text x="52" y="222" font-size="12" fill="#8a8d93">Login</text>`);
+    s.push(`<rect x="40" y="244" width="300" height="34" rx="6" fill="#fff" stroke="#c9ccd1"/><text x="52" y="266" font-size="12" fill="#8a8d93">${T('Parol', 'Password')}</text>`);
+    s.push(`<rect x="360" y="244" width="110" height="34" rx="6" fill="#1a73e8"/><text x="415" y="266" font-size="13" font-weight="bold" fill="#fff" text-anchor="middle">${T('Kirish', 'Sign in')}</text>`);
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="Arial, Helvetica, sans-serif">` + s.join('') + '</svg>';
+}
+
+function cardSVG(f) {
+    const W = 600, items = f.lines.map(l => wrap(pick(l), 62));
+    const total = items.reduce((a, b) => a + b.length, 0), H = 40 + 30 + total * 21 + items.length * 12 + 20;
+    let s = [`<rect width="${W}" height="${H}" fill="#fff"/><rect width="${W}" height="40" fill="#5f6368"/><text x="20" y="26" font-size="15" font-weight="bold" fill="#fff">${esc(pick(f.head))}</text>`];
+    let y = 72;
+    items.forEach(ls => {
+        ls.forEach((ln, i) => { s.push(`<text x="${i ? 40 : 24}" y="${y}" font-size="14" fill="#202124">${i ? '' : '&#8226; '}${esc(ln)}</text>`); y += 21; });
+        y += 12;
+    });
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="Arial, Helvetica, sans-serif">` + s.join('') + '</svg>';
+}
+const RENDER = { email: emailSVG, sms: smsSVG, url: urlSVG, card: cardSVG };
+const imgSrc = spec => svgURI(RENDER[spec.t](spec.f).replace(/^(<svg[^>]*>)/, '$1'));
+
+// ===================== Lab 1: Savol-Javob (14 ta, qiyin daraja) =====================
+const QA_CATS = [
+    { n: '1. Phishing Analysis', txt: 'text-emerald-500', bd: 'border-emerald-500/40' },
+    { n: '2. Smishing Analysis', txt: 'text-amber-500', bd: 'border-amber-500/40' },
+    { n: '3. Impersonation Analysis', txt: 'text-sky-500', bd: 'border-sky-500/40' },
+    { n: '4. Identify Warning Signs', txt: 'text-rose-500', bd: 'border-rose-500/40' },
+    { n: '5. Links & Domains Analysis', txt: 'text-purple-500', bd: 'border-purple-500/40' },
+    { n: '6. Social-Engineering Classification', txt: 'text-indigo-500', bd: 'border-indigo-500/40' },
+    { n: '7. Responses & Preventive Measures', txt: 'text-teal-500', bd: 'border-teal-500/40' }
+];
+
+// Har bir topshiriqda 2-4 ta variant bor; to'g'ri javob `ok: true` bilan belgilangan (talabaga ko'rsatilmaydi).
+const QA_TASKS = [
+    // ---------- 1. Phishing ----------
+    { id: '1.1', cat: 0,
+      title: ["Qaysi xat haqiqiy (legitimate)?", "Which email is legitimate?"],
+      hint: ["Ikkala xat ham ishonchli ko'rinadi. Yuboruvchi va havola domenining asosiy qismini (oxirgi ikki bo'lak) tekshiring.", "Both emails look trustworthy. Check the main part of the sender and link domains (the last two labels)."],
+      why: ["notify.click.uz — click.uz ning subdomeni (asosiy domen click.uz) va tugma ham click.uz ga olib boradi. «click.uz.support-center.net» da esa asosiy domen support-center.net — click.uz faqat subdomen nomi sifatida ishlatilgan, bu haqiqiy egasiga hech qanday aloqasi yo'q.",
+            "notify.click.uz is a subdomain of click.uz (main domain click.uz) and the button also leads to click.uz. In «click.uz.support-center.net» the main domain is support-center.net — click.uz is used only as a subdomain label and has nothing to do with the real owner."],
+      specs: [
+        { t: 'email', ok: true, k: 'legit', f: { name: 'Click Up', addr: 'no-reply@notify.click.uz', greet: ["Hurmatli Jasur,", "Dear Jasur,"],
+            subj: ["To'lovni tasdiqlash: 1 500 000 so'm", "Payment notice: 1,500,000 UZS"],
+            body: ["12-oktabr kuni 14:32 da kartangiz (**** 4417) orqali 1 500 000 so'm to'lov amalga oshirildi (MEGA PLANET). Agar bu amalni siz bajarmagan bo'lsangiz, to'lovga 24 soat ichida ilova orqali e'tiroz bildirishingiz mumkin.",
+                   "On October 12 at 14:32 a payment of 1,500,000 UZS was made with your card (**** 4417) at MEGA PLANET. If you did not make this payment, you can dispute it in the app within 24 hours."],
+            btn: ["To'lovni ko'rish", "View payment"], color: '#1a73e8', status: 'https://click.uz/payments/4417' } },
+        { t: 'email', k: 'phish', f: { name: 'Click Up', addr: 'no-reply@click.uz.support-center.net', greet: ["Hurmatli Jasur,", "Dear Jasur,"],
+            subj: ["To'lovni tasdiqlash: 1 500 000 so'm", "Payment notice: 1,500,000 UZS"],
+            body: ["12-oktabr kuni 14:32 da kartangiz (**** 4417) orqali 1 500 000 so'm to'lov amalga oshirildi (MEGA PLANET). Agar bu amalni siz bajarmagan bo'lsangiz, to'lovga 24 soat ichida ilova orqali e'tiroz bildirishingiz mumkin.",
+                   "On October 12 at 14:32 a payment of 1,500,000 UZS was made with your card (**** 4417) at MEGA PLANET. If you did not make this payment, you can dispute it in the app within 24 hours."],
+            btn: ["To'lovni ko'rish", "View payment"], color: '#1a73e8', status: 'https://click.uz.support-center.net/payments/4417' } }
+      ] },
+    { id: '1.2', cat: 0,
+      title: ["Qaysi xat zararli?", "Which email is malicious?"],
+      hint: ["Ikkala xat bir xil hamkordan. Fayl turi va xat talab qilayotgan amal bir-biriga mos keladimi?", "Both come from the same partner. Does the file type and the action the email asks for make sense together?"],
+      why: ["Zararli xatdagi fayl PDF, lekin xat uni ochish uchun «Makroslarni yoqish»ni talab qiladi. PDF makrosiz ishlaydi, shuning uchun bu — zararli kodni ishga tushirish hiylasi. Boshqa xatda fayl turi va xabar mos: oddiy PDF, hech qanday qo'shimcha amal talab qilinmaydi.",
+            "The malicious email attaches a PDF but tells you to «Enable macros» to open it. PDFs do not need macros, so this is a trick to run malicious code. In the other email the file type and the message agree: a plain PDF, with no extra action requested."],
+      specs: [
+        { t: 'email', k: 'legit', f: { name: ["Ariel Savdo — Buxgalteriya", "Ariel Savdo — Accounting"], addr: 'buxgalteriya@ariel-savdo.uz', greet: ["Hurmatli hamkor,", "Dear partner,"],
+            subj: ["Hisob-faktura № 4471", "Invoice No. 4471"],
+            body: ["12-oktabrdagi yetkazib berish bo'yicha hisob-faktura ilova qilindi. To'lov muddati — 20-oktabr.", "The invoice for the October 12 delivery is attached. The payment is due on October 20."],
+            attach: 'faktura_4471.pdf' } },
+        { t: 'email', ok: true, k: 'malware', f: { name: ["Ariel Savdo — Buxgalteriya", "Ariel Savdo — Accounting"], addr: 'buxgalteriya@ariel-savdo.uz', greet: ["Hurmatli hamkor,", "Dear partner,"],
+            subj: ["Hisob-faktura № 4471 (yangilangan)", "Invoice No. 4471 (updated)"],
+            body: ["Yangilangan hisob-faktura ilovada. Fayl himoyalangan: ochilganda «Makroslarni yoqish» tugmasini bosing, aks holda ma'lumotlar ko'rinmaydi.", "The updated invoice is attached. The file is protected: when it opens, click «Enable macros», otherwise the data will not be visible."],
+            attach: 'faktura_4471.pdf' } }
+      ] },
+    // ---------- 2. Smishing ----------
+    { id: '2.1', cat: 1,
+      title: ["Qaysi SMS smishing?", "Which SMS is smishing?"],
+      hint: ["Shoshilinchlik va to'lov talabi hammasida bor. Havola manzili kimga tegishli?", "Urgency and a payment demand appear in all of them. Who does the link address belong to?"],
+      why: ["Smishing — qisqartirilgan bit.ly havolali SMS: u haqiqiy manzilni yashiradi, rasmiy tashkilot esa o'z domenidan foydalanadi. Boshqa ikkisida havola uzpost.uz domenida (pay.uzpost.uz — uning subdomeni). Shoshilinchlik yoki to'lov talabi o'z-o'zidan smishing belgisi emas — manzil kimga tegishli ekani hal qiladi.",
+            "The smishing SMS uses a shortened bit.ly link, which hides the real destination, while an official organization uses its own domain. In the other one, the link is on uzpost.uz itself. Urgency or a payment request alone does not make an SMS smishing — who owns the address does."],
+      specs: [
+        { t: 'sms', k: 'legit', f: { name: 'UZPOST', sub: ["SMS xizmati", "SMS service"],
+            text: ["UzPost: UZ482915037 posilkasi Toshkent-12 bo'limida 5 kundan beri turibdi. Saqlash muddati 2 kunda tugaydi. Kuzatish:", "UzPost: parcel UZ482915037 has been at the Tashkent-12 branch for 5 days. The storage period ends in 2 days. Track it:"],
+            link: 'uzpost.uz/t/482915037' } },
+        { t: 'sms', ok: true, k: 'smish', f: { name: 'UZPOST', sub: ["SMS xizmati", "SMS service"],
+            text: ["UzPost: UZ482915037 posilka yetkazilmadi — manzilni tasdiqlang:", "UzPost: parcel UZ482915037 was not delivered — confirm your address:"],
+            link: 'bit.ly/uzpost-4829', tail: ["Tasdiqlanmasa posilka qaytariladi.", "If not confirmed, the parcel will be returned."] } }
+      ] },
+    { id: '2.2', cat: 1,
+      title: ["Qaysi SMS haqiqiy?", "Which SMS is legitimate?"],
+      hint: ["«Kodni hech kimga aytmang» iborasi hammasida bor. Kodni kimga va qayerga kiritish so'ralayapti?", "The phrase «do not share the code» appears in all of them. Who or where are you asked to give the code to?"],
+      why: ["Haqiqiy SMS faqat kod va ogohlantirishdan iborat: havola ham, «kodni operatorga bering» degan talab ham yo'q. Boshqa variant esa kodni «xavfsizlik operatori»ga aytishni so'raydi — haqiqiy bank hech qachon tasdiqlash kodini so'ramaydi, buni so'ragan har qanday xabar firibgarlik.",
+            "The genuine SMS contains only the code and a warning: no link and no request to «give the code to an operator». The other one asks you to read the code to a «security operator» — a real bank never asks for a confirmation code, so any message asking for it is a scam."],
+      specs: [
+        { t: 'sms', ok: true, k: 'legit', f: { name: 'Payme', sub: ["SMS xizmati", "SMS service"],
+            text: ["Payme: 482915 — 150 000 so'm to'lovni tasdiqlash kodi. Kodni hech kimga aytmang. Siz so'ramagan bo'lsangiz, e'tibor bermang.", "Payme: 482915 is your confirmation code for a 150,000 UZS payment. Do not tell the code to anyone. If you did not request it, ignore this message."] } },
+        { t: 'sms', k: 'scam', f: { name: 'Payme', sub: ["SMS xizmati", "SMS service"],
+            text: ["Payme: 482915 — kartani tasdiqlash kodi. Kodni hech kimga aytmang. Faqat bank xavfsizlik operatoriga ID 4471 bilan bering.", "Payme: 482915 is your card confirmation code. Do not tell the code to anyone. Give it only to the bank security operator with ID 4471."] } }
+      ] },
+    // ---------- 3. Impersonation ----------
+    { id: '3.1', cat: 2,
+      title: ["Qaysi xabar haqiqiy rahbardan kelgan?", "Which message really comes from the director?"],
+      hint: ["Ism hammasida bir xil. Profil tarixiga va so'rov qaysi kanal orqali bajarilishiga e'tibor bering.", "The name is the same in all of them. Look at the profile history and through which channel the request is meant to be carried out."],
+      why: ["Haqiqiy xabar xodimlar ro'yxatidagi tasdiqlangan profildan keladi va so'rov rasmiy tizim (ERP) orqali bajariladi. Boshqasi — yangi/noma'lum profil: sovg'a kartasi kodlarini rasmga olib yuborishni tizimdan tashqarida talab qilish va «qo'ng'iroq qila olmayman» bahonasi klassik soxta rahbar hiylasi.",
+            "The genuine message comes from a verified profile in the staff directory and the request is handled through the official system (ERP). The other one is a new/unknown profile asking for photos of gift-card codes outside any system, with the «can't call» excuse — a classic fake-executive trick."],
+      specs: [
+        { t: 'sms', ok: true, k: 'legit', f: { name: 'Aziz Karimov', sub: ["Korporativ messenjer · xodimlar ro'yxatida", "Corporate messenger · in staff directory"],
+            when: ["Bugun, 09:15", "Today, 09:15"],
+            text: ["Malika, kechagi shartnoma bo'yicha to'lovni buxgalteriya tizimida (ERP) №4471 bilan tasdiqlab qo'ying. Ertaga tushlikda gaplashamiz.", "Malika, please approve the payment for yesterday's contract in the accounting system (ERP) under no. 4471. Let's talk tomorrow at lunch."] } },
+        { t: 'sms', k: 'fake', f: { name: 'Aziz Karimov', sub: ["Yangi profil · kontaktlarda yo'q · @aziz.karimov.ceo", "New profile · not in contacts · @aziz.karimov.ceo"],
+            when: ["Bugun, 09:15", "Today, 09:15"],
+            text: ["Malika, salom. Yangi raqamdaman, eskisi buzildi. Mehmonlar uchun 3 ta 500 000 so'mlik sovg'a kartasi olib, kodlarini rasmga olib yuboring. Yig'ilishdaman, qo'ng'iroq qila olmayman.", "Malika, hi. I'm on a new number, the old one was hacked. Buy 3 gift cards of 500,000 UZS for guests and send me photos of the codes. I'm in a meeting and can't call."] } }
+      ] },
+    { id: '3.2', cat: 2,
+      title: ["Qaysi qo'ng'iroq vishing?", "Which call is vishing?"],
+      hint: ["Ekrandagi raqamga ishonmang (caller ID soxtalashtiriladi). Qo'ng'iroq davomida nima so'ralayotganini tekshiring.", "Do not trust the number on the screen (caller ID can be spoofed). Check what is being asked during the call."],
+      why: ["Vishing to'g'ri javob: ichki raqam ko'rinsa ham qo'ng'iroq tashqi liniyadan keladi (spoofing) va login hamda bir martalik (OTP) kod so'raladi. Haqiqiy IT xodimi parol yoki OTP so'ramaydi. Boshqasida sir so'ralmaydi, jarayon rasmiy portal/tiket orqali ketadi.",
+            "Vishing is the correct answer: the internal number is spoofed (the call arrives on an external line) and it asks for your login and a one-time (OTP) code. A real IT employee never asks for passwords or OTPs. The other call asks for nothing secret and works through the official portal/ticket system."],
+      specs: [
+        { t: 'sms', k: 'legit', f: { name: ["IT bo'limi (ichki 214)", "IT Department (ext. 214)"], sub: ["Kiruvchi qo'ng'iroq · ichki raqam", "Incoming call · internal extension"],
+            when: ["Bugun, 11:05", "Today, 11:05"],
+            text: ["Qo'ng'iroq qiluvchi: «Salom, IT bo'limidan. Kompyuteringizda antivirus yangilanishi bajarilmadi. Helpdesk portalida sizga tiket ochdim — portalga o'zingiz kirib ko'ring. Parolingizni so'ramayman.»", "Caller: «Hello, this is IT. The antivirus update failed on your computer. I opened a ticket for you on the Helpdesk portal — log in to the portal yourself and check. I am not asking for your password.»"] } },
+        { t: 'sms', ok: true, k: 'vishing', f: { name: ["IT bo'limi (ichki 214)", "IT Department (ext. 214)"], sub: ["Kiruvchi qo'ng'iroq · ichki raqam ko'rinadi · tashqi liniya", "Incoming call · internal number shown · external line"],
+            when: ["Bugun, 11:05", "Today, 11:05"],
+            text: ["Qo'ng'iroq qiluvchi: «IT dan qo'ng'iroq. VPN sessiyangiz tugayapti. Uzilib qolmasligi uchun hozir logingiz va telefoningizga kelgan bir martalik kodni ayting, men sessiyani uzaytiraman.»", "Caller: «Calling from IT. Your VPN session is expiring. To avoid disconnection, tell me your login and the one-time code sent to your phone right now and I will extend the session.»"] } }
+      ] },
+    // ---------- 4. Warning signs ----------
+    { id: '4.1', cat: 3,
+      ctx: ["Bankning rasmiy sayti: navrozbank.uz", "The bank's official website: navrozbank.uz"],
+      title: ["Qaysi xat phishing?", "Which email is phishing?"],
+      hint: ["Yuboruvchi manzili hammasida rasmiy ko'rinadi (u soxtalashtirilishi mumkin). Pastdagi satrda tugma haqiqatda qayerga olib borishini ko'ring.", "The sender looks official in all of them (it can be spoofed). Check in the bottom bar where the button really leads."],
+      why: ["Phishing to'g'ri javob: matnda navrozbank.uz/kabinet yozilgan, lekin tugma navrozbank-kabinet.com ga olib boradi (pastdagi satr — kursor olib borilganda ko'rinadigan haqiqiy manzil). Yuboruvchi manzili soxtalashtirilishi mumkin, shuning uchun havolaning haqiqiy manzilini tekshirish kerak.",
+            "Phishing is the correct answer: the text says navrozbank.uz/kabinet but the button leads to navrozbank-kabinet.com (the bottom bar shows the real address on hover). The sender address can be spoofed, so the real link destination must be checked."],
+      specs: [
+        { t: 'email', k: 'legit', f: { name: "Navro'z Bank", addr: 'info@navrozbank.uz', greet: ["Hurmatli Sardor Aliyev,", "Dear Sardor Aliyev,"],
+            subj: ["Kredit to'lovi eslatmasi", "Loan payment reminder"],
+            body: ["Kredit bo'yicha navbatdagi to'lov (1 250 000 so'm) 15-oktabrga qadar to'lanishi kerak. Batafsil ma'lumot shaxsiy kabinetingizda: navrozbank.uz/kabinet", "The next loan payment (1,250,000 UZS) must be made by October 15. Details are in your personal account: navrozbank.uz/kabinet"],
+            btn: ["Kabinetga kirish", "Open my account"], color: '#1a73e8', status: 'https://navrozbank.uz/kabinet' } },
+        { t: 'email', ok: true, k: 'phish', f: { name: "Navro'z Bank", addr: 'info@navrozbank.uz', greet: ["Hurmatli Sardor Aliyev,", "Dear Sardor Aliyev,"],
+            subj: ["Kredit to'lovi eslatmasi", "Loan payment reminder"],
+            body: ["Kredit bo'yicha navbatdagi to'lov (1 250 000 so'm) 15-oktabrga qadar to'lanishi kerak. Batafsil ma'lumot shaxsiy kabinetingizda: navrozbank.uz/kabinet", "The next loan payment (1,250,000 UZS) must be made by October 15. Details are in your personal account: navrozbank.uz/kabinet"],
+            btn: ["Kabinetga kirish", "Open my account"], color: '#1a73e8', status: 'http://navrozbank-kabinet.com/login' } }
+      ] },
+    { id: '4.2', cat: 3,
+      title: ["Qaysi xabar hissiy bosim hujumi?", "Which message is an emotional-pressure attack?"],
+      hint: ["Shoshilinchlik o'z-o'zidan hujum emas. Qo'rquv, sir saqlash talabi va pul so'ralishini qidiring.", "Urgency alone is not an attack. Look for fear, a demand for secrecy and a request for money."],
+      why: ["Hissiy bosim hujumi to'g'ri javob: yaqin odam nomidan qo'rqitish, «dadamga aytmang» deb sir saqlashni talab qilish, yangi raqam va kartaga pul so'rash — klassik hissiy manipulyatsiya. Boshqa xabar ham shoshilinch, lekin hech narsa yashirilmaydi va pul yoki maxfiy ma'lumot talab qilinmaydi.",
+            "The emotional-pressure attack is the correct answer: frightening you in the name of a loved one, demanding secrecy («don't tell dad»), using a new number and asking for money on a card is classic emotional manipulation. The other message is also urgent, but nothing is hidden and no money or secret data is requested."],
+      specs: [
+        { t: 'sms', k: 'legit', f: { name: "Navro'z Bank", sub: ["SMS xizmati", "SMS service"],
+            when: ["Bugun, 14:20", "Today, 14:20"],
+            text: ["Navro'z Bank: kartangiz (**** 4417) orqali shubhali urinish bloklandi. Agar bu siz bo'lsangiz — ilovada tasdiqlang. Boshqa amal talab qilinmaydi.", "Navro'z Bank: a suspicious attempt with your card (**** 4417) was blocked. If it was you, confirm it in the app. No other action is required."] } },
+        { t: 'sms', ok: true, k: 'scam', f: { name: '+998 99 123 45 67', sub: ["Noma'lum raqam", "Unknown number"],
+            when: ["Bugun, 14:20", "Today, 14:20"],
+            text: ["Onajon, men Sardorman, telefonim buzildi. Baxtsiz hodisa bo'ldi, hozir kasalxonadaman. Dadamga aytmang, qo'rqib ketadi. 3 000 000 so'mni tezroq shu kartaga o'tkazib yubor:", "Mom, it's Sardor, my phone is broken. There was an accident, I'm at the hospital now. Don't tell dad, he'll be scared. Please send 3,000,000 UZS to this card quickly:"],
+            tail: ["8600 12** **** 3456", "8600 12** **** 3456"] } }
+      ] },
+    // ---------- 5. Links & domains ----------
+    { id: '5.1', cat: 4,
+      title: ["Qaysi manzil haqiqiy sayt?", "Which address is the real site?"],
+      hint: ["Domenni harfma-harf o'qing: yonma-yon harflar bir harfga o'xshab ketishi mumkin (rn ≈ m).", "Read the domain letter by letter: adjacent letters can look like one letter (rn ≈ m)."],
+      why: ["To'g'ri manzil — www.payme.uz. «payrne.uz» da esa «m» o'rniga yonma-yon «r» va «n» qo'yilgan — uzoqdan qarasa «m» ga o'xshab ko'rinadi, bu — typosquatting (domenni vizual taqlid qilish).",
+            "The correct address is www.payme.uz. In «payrne.uz», «r» and «n» are placed side by side instead of «m» — from a distance it looks like «m». This is typosquatting (visually imitating a domain)."],
+      specs: [
+        { t: 'url', k: 'typo', f: { url: 'https://www.payrne.uz', tab: ["Payme — to'lov tizimi", "Payme — payment system"], head: ["Payme'ga kirish", "Sign in to Payme"] } },
+        { t: 'url', ok: true, k: 'legit', f: { url: 'https://www.payme.uz', tab: ["Payme — to'lov tizimi", "Payme — payment system"], head: ["Payme'ga kirish", "Sign in to Payme"] } }
+      ] },
+    { id: '5.2', cat: 4,
+      title: ["Qaysi manzil soxta?", "Which address is fake?"],
+      hint: ["Brauzer haqiqiy hostni qanday aniqlashini o'ylang: «@», nuqta va birinchi «/» belgilari muhim.", "Think about how the browser finds the real host: the «@», the dots and the first «/» matter."],
+      why: ["Soxta manzil — https://click.uz@my-login.info/login. «@» belgisigacha bo'lgan qism (click.uz) faqat foydalanuvchi nomi hisoblanadi, brauzer esa «@» dan keyingi my-login.info saytiga olib boradi. Boshqasida host to'g'ridan-to'g'ri click.uz ning subdomeni (my.click.uz).",
+            "The fake address is https://click.uz@my-login.info/login. The part before «@» (click.uz) is only a username; the browser actually goes to my-login.info after the «@». In the other one, the host is directly a subdomain of click.uz (my.click.uz)."],
+      specs: [
+        { t: 'url', k: 'legit', f: { url: 'https://my.click.uz/login', tab: ["Click — kirish", "Click — sign in"], head: ["Click kabinetiga kirish", "Sign in to Click"] } },
+        { t: 'url', ok: true, k: 'at-trick', f: { url: 'https://click.uz@my-login.info/login', tab: ["Click — kirish", "Click — sign in"], head: ["Click kabinetiga kirish", "Sign in to Click"] } }
+      ] },
+    // ---------- 6. Classification ----------
+    { id: '6.1', cat: 5,
+      title: ["Qaysi hujum whaling?", "Which attack is whaling?"],
+      hint: ["Hujum turini nishon kimligi (lavozimi) belgilaydi. Xat kimning nomidan emas, kimga yo'llanganiga qarang.", "The attack type is defined by who the target is (their position). Look at who the email is addressed to, not whose name it uses."],
+      why: ["Whaling to'g'ri javob: hujum kompaniyaning eng yuqori rahbariga (CEO) qaratilgan va uning lavozimiga mos ssenariy (sud chaqiruvi) ishlatilgan. Ikkinchisi — oddiy xodim (buxgalter)ga rahbar nomidan yuborilgan aniq maqsadli xat, ya'ni spear phishing (CEO ismi tilga olinishi uni whaling qilmaydi, chunki nishon — xodim, rahbar emas).",
+            "Whaling is the correct answer: the attack targets the company's top executive (CEO) with a scenario suited to their position (a court summons). The other one is spear phishing — a targeted email to an ordinary employee (an accountant) in the CEO's name; mentioning the CEO does not make it whaling, because the target is the employee, not the executive."],
+      specs: [
+        { t: 'email', k: 'spear', f: { name: ["Aziz Karimov (Bosh direktor)", "Aziz Karimov (CEO)"], addr: 'a.karimov@kompaniya-mail.info',
+            to: ["Malika Karimova (Buxgalter)", "Malika Karimova (Accountant)"], greet: ["Malika,", "Malika,"],
+            subj: ["Shoshilinch to'lov", "Urgent payment"],
+            body: ["Bugun 16:00 gacha ushbu yetkazib beruvchiga to'lovni amalga oshiring. Rekvizitlar ilovada. Yig'ilishdaman, javob bera olmayman.", "Please make the payment to this supplier by 16:00 today. The bank details are attached. I'm in a meeting and can't reply."],
+            attach: 'rekvizit.pdf' } },
+        { t: 'email', ok: true, k: 'whale', f: { name: ["Sud departamenti", "Court Department"], addr: 'notice@court-uz.info',
+            to: ["Aziz Karimov (Bosh direktor)", "Aziz Karimov (CEO)"], greet: ["Hurmatli Aziz Karimov,", "Dear Aziz Karimov,"],
+            subj: ["Kompaniya nomiga sud chaqiruvi", "Court summons for your company"],
+            body: ["Kompaniya rahbari sifatida sizga sud chaqiruv qog'ozi yuborildi. 24 soat ichida hujjatni ochib, ma'lumotlaringizni tasdiqlang.", "As head of the company, a court summons has been issued to you. Open the document and confirm your details within 24 hours."],
+            btn: ["Hujjatni ochish", "Open document"], color: '#d93025', status: 'http://court-uz.info/chaqiruv/8842' } }
+      ] },
+    { id: '6.2', cat: 5,
+      title: ["Qaysi ssenariy baiting?", "Which scenario is baiting?"],
+      hint: ["Ikkalasi ham ijtimoiy muhandislik. Baiting — qurbon uchun jozibali «o'lja»ni jismoniy qoldirish; buni so'rov/sabab o'ylab topishdan farqlang.", "Both are social engineering. Baiting means leaving a tempting «bait» physically for the victim; distinguish it from inventing a request/reason."],
+      why: ["Baiting to'g'ri javob: qurbon uchun jozibali jismoniy «o'lja» (sovg'a USB-flesh) qoldiriladi va u o'z qiziqishi bilan uni ulaydi. Ikkinchisi — pretexting: hujumchi uydirma rol (tashqi auditor) va sabab o'ylab topib, to'g'ridan-to'g'ri tizimga kirish ma'lumotlarini so'raydi.",
+            "Baiting is the correct answer: a tempting physical «bait» (a free USB drive) is left for the victim, who plugs it in out of curiosity. The other is pretexting: the attacker invents a role (an external auditor) and a reason, then directly asks for system login details."],
+      specs: [
+        { t: 'card', ok: true, k: 'bait', f: { head: ["Ssenariy", "Scenario"], lines: [
+            ["Konferensiyada ishtirokchilarga tarqatilgan logotipli sovg'a USB-flesh.", "A logo-branded free USB drive handed out to attendees at a conference."],
+            ["Ichida «Taqdimot materiallari» nomli fayl bor.", "It contains a file named «Presentation materials»."],
+            ["Xodim uni ish kompyuteriga ulab, faylni ochadi.", "An employee plugs it into a work computer and opens the file."]] } },
+        { t: 'card', k: 'pretext', f: { head: ["Ssenariy", "Scenario"], lines: [
+            ["Telefon: «Men tashqi auditordanman, rahbaringiz Aziz Karimov ruxsat bergan.»", "Phone call: «I am an external auditor, your manager Aziz Karimov has approved this.»"],
+            ["Tekshiruv uchun tizimga kirish ma'lumotlarini so'raydi.", "He asks for system login details for an inspection."]] } }
+      ] },
+    // ---------- 7. Responses & prevention ----------
+    { id: '7.1', cat: 6,
+      ctx: ["Vaziyat: siz shubhali xatdagi havolani bosdingiz va login-parolingizni kiritib yubordingiz. Endi bu hujum ekanini tushundingiz.", "Situation: you clicked the link in a suspicious email and entered your login and password. Now you realize it was an attack."],
+      title: ["Qaysi harakat to'g'ri?", "Which action is appropriate?"],
+      hint: ["Hujumni chegaralash va boshqalarni himoyalash uchun tezlik va xabar berish muhim.", "Speed and reporting matter for containing the attack and protecting others."],
+      why: ["To'g'ri harakat — darhol IT/SOC ga xabar berish va ularning ko'rsatmasi bilan parol hamda faol sessiyalarni almashtirish. Kechiktirmasdan xabar berish tashkilotga hujumni chegaralash imkonini beradi (boshqa xodimlar ham xat olgan bo'lishi mumkin). Boshqa variant esa hech narsa qilmasdan, xabar bermasdan ishni davom ettirishni taklif qiladi — bu xavfni tashkilotning boshqa a'zolari uchun ham ochiq qoldiradi.",
+            "The right action is to report to IT/SOC immediately and, following their instructions, change the password and end active sessions. Prompt reporting lets the organization contain the attack (other employees may have received the email). The other option suggests doing nothing and not reporting at all — leaving the risk open for the rest of the organization too."],
+      specs: [
+        { t: 'card', k: 'weak', f: { head: ["Harakat varianti", "Action option"], lines: [
+            ["Xatni o'chirib, hech narsa bo'lmagandek ishimni davom ettiraman.", "I delete the email and carry on with my work as if nothing happened."]] } },
+        { t: 'card', ok: true, k: 'good', f: { head: ["Harakat varianti", "Action option"], lines: [
+            ["Darhol IT/SOC bo'limiga xabar beraman.", "I immediately report it to the IT/SOC department."],
+            ["Ularning ko'rsatmasi bilan parolni o'zgartirib, faol sessiyalarni tugataman va 2FA ni tekshiraman.", "Following their instructions, I change the password, end active sessions and check 2FA."]] } }
+      ] },
+    { id: '7.2', cat: 6,
+      title: ["Qaysi hisob eng yaxshi himoyalangan?", "Which account is best protected?"],
+      hint: ["Parol turi, 2FA usuli (SMS yoki boshqa) va tiklash sozlamalarini solishtiring.", "Compare the password type, the 2FA method (SMS or other) and the recovery settings."],
+      why: ["Eng yaxshi himoya — parol menejeri yaratgan noyob parol, passkey/xavfsizlik kaliti (FIDO2) va offline saqlangan tiklash kodlari: passkey phishingga chidamli. Boshqa variantda esa parol barcha saytlarda bir xil — bitta sayt sizib chiqsa, qolgan hamma hisob ham xavf ostida qoladi, 2FA esa SMS kod bilangina cheklangan (SIM-swap orqali aylanib o'tilishi mumkin).",
+            "The best protection is a unique password from a password manager, a passkey/security key (FIDO2) and offline recovery codes: passkeys resist phishing. In the other option the same password is reused on every site — if one leaks, every account is exposed — and 2FA relies only on SMS codes (which can be bypassed via SIM-swap)."],
+      specs: [
+        { t: 'card', ok: true, k: 'best', f: { head: ["Himoya sozlamalari", "Protection settings"], lines: [
+            ["Parol: parol menejeri yaratgan noyob 20 belgili parol.", "Password: unique 20-character password generated by a password manager."],
+            ["2FA: passkey / xavfsizlik kaliti (FIDO2).", "2FA: passkey / security key (FIDO2)."],
+            ["Tiklash kodlari offline saqlangan.", "Recovery codes are stored offline."]] } },
+        { t: 'card', k: 'ok', f: { head: ["Himoya sozlamalari", "Protection settings"], lines: [
+            ["Parol: 16 belgili, barcha saytlarda bir xil.", "Password: 16 characters, the same on every site."],
+            ["2FA: SMS kod.", "2FA: SMS code."]] } }
+      ] }
+];
+
+
+// ===================== Umumiy Lab dvigateli (QA va Practical Lab uchun) =====================
+const LET = ['a', 'b', 'c', 'd'];
+const MIN_COMMENT = 40;
+const shuffle = a => { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; };
+
+const COMMON_UI = {
+    progress: ["Bajarildi", "Completed"],
+    locked: ["Qulfli", "Locked"], active: ["Jarayonda", "In progress"], done: ["Javob berildi", "Answered"],
+    opt: ["variant", "option"], choose: ["ni tanlash", "Choose"],
+    commentLabel: ["Izoh: nima uchun aynan shuni tanladingiz? Boshqa variantlardan nimasi bilan farq qiladi?", "Comment: why did you choose this one? How does it differ from the other options?"],
+    ph0: ["Avval variantni tanlang...", "Choose an option first..."],
+    ph1: ["Belgilar, sozlamalar yoki buyruq natijalariga qarab asoslang (kamida 40 belgi)...", "Justify your choice using the signals, settings or command output (at least 40 characters)..."],
+    picked: ["Tanlovingiz qabul qilindi: {s}. Endi izohda asoslang (tanlovni o'zgartirishingiz mumkin).", "Your choice was recorded: {s}. Now justify it in the comment (you can still change your choice)."],
+    accepted: ["Izoh qabul qilindi. Keyingi topshiriq ochildi.", "Comment accepted. The next task is unlocked."],
+    acceptedLast: ["Izoh qabul qilindi. Barcha topshiriqlar bajarildi.", "Comment accepted. All tasks are done."],
+    send: ["Izohni yuborish", "Submit comment"],
+    resTitle: ["Yakuniy natija", "Final result"],
+    resBy: ["Yo'nalishlar bo'yicha", "By topic"],
+    resReview: ["Javoblar tahlili", "Answer review"],
+    yourPick: ["Sizning tanlovingiz", "Your choice"], correctIs: ["To'g'ri javob", "Correct answer"],
+    tagCorrect: ["✓ To'g'ri javob", "✓ Correct answer"], tagWrong: ["✕ Sizning tanlovingiz", "✕ Your choice"], tagYours: ["✓ Sizning tanlovingiz", "✓ Your choice"],
+    retry: ["Qaytadan boshlash", "Start over"],
+    levels: [["A'lo", "Excellent"], ["Yaxshi", "Good"], ["Qoniqarli", "Satisfactory"], ["Qayta ko'rib chiqing", "Needs review"]]
+};
+
+const LABS = {}; // prefix -> {cats, tasks, ui, state, rootId, resultsId}
+
+function registerLab(prefix, cats, tasks, ui, rootId, resultsId) {
+    LABS[prefix] = { cats, tasks, ui: Object.assign({}, COMMON_UI, ui), rootId, resultsId, state: null };
+    LABS[prefix].state = tasks.map((_, i) => newState(prefix, i));
+}
+const u = (prefix, key) => pick(LABS[prefix].ui[key]);
+const newState = (prefix, i) => ({ order: shuffle(LABS[prefix].tasks[i].specs.map((_, x) => x)), pick: null, comment: '', done: false, changes: 0 });
+const doneCount = prefix => LABS[prefix].state.filter(s => s.done).length;
+const allDone = prefix => doneCount(prefix) === LABS[prefix].tasks.length;
+const sidesOf = (prefix, i) => LET.slice(0, LABS[prefix].tasks[i].specs.length);
+const specOf = (prefix, i, side) => { const L = LABS[prefix]; return L.tasks[i].specs[L.state[i].order[LET.indexOf(side)]]; };
+const correctSide = (prefix, i) => sidesOf(prefix, i).find(s => specOf(prefix, i, s).ok);
+const isCorrect = (prefix, i) => { const st = LABS[prefix].state[i]; return !!st.pick && specOf(prefix, i, st.pick).ok === true; };
+
+function calcScore(prefix) {
+    const L = LABS[prefix]; const perCat = L.cats.map(() => [0, 0]); let c = 0;
+    L.tasks.forEach((t, i) => { perCat[t.cat][1]++; if (isCorrect(prefix, i)) { c++; perCat[t.cat][0]++; } });
+    return { c, perCat };
+}
+
+function panelClass(prefix, i) {
+    const L = LABS[prefix];
+    const locked = i > doneCount(prefix);
+    return 'p-3 bg-white dark:bg-slate-800 border ' + L.cats[L.tasks[i].cat].bd + ' rounded-lg space-y-3' + (locked ? ' opacity-50 pointer-events-none' : '');
+}
+
+function panelHTML(prefix, i) {
+    const L = LABS[prefix], tk = L.tasks[i], st = L.state[i], locked = i > doneCount(prefix), fin = false; // yakunda to'g'ri/xato ko'rsatilmaydi
+    const badge = st.done ? ['done', 'bg-emerald-500/10 text-emerald-500'] : locked ? ['locked', 'bg-slate-500/10 text-slate-400'] : ['active', 'bg-amber-500/10 text-amber-500'];
+    const len = st.comment.trim().length;
+    const canType = !!st.pick && !st.done;
+    const col = side => {
+        const spec = specOf(prefix, i, side);
+        const sel = st.pick === side, right = fin && spec.ok, wrongSel = fin && sel && !right;
+        const ring = fin ? (right ? 'ring-4 ring-emerald-500' : wrongSel ? 'ring-4 ring-rose-500' : '') : (sel ? 'ring-4 ring-sky-500' : '');
+        const tag = fin && (right || wrongSel)
+            ? `<div class="text-[11px] font-bold ${right ? 'text-emerald-500' : 'text-rose-500'}">${right ? (sel ? u(prefix, 'tagYours') : u(prefix, 'tagCorrect')) : u(prefix, 'tagWrong')}</div>` : '';
+        return `<div class="space-y-2">
+            <div class="text-[11px] font-bold text-slate-600 dark:text-slate-300">${side.toUpperCase()} ${u(prefix, 'opt')}</div>
+            <img src="${imgSrc(spec)}" alt="${side.toUpperCase()}" class="w-full rounded-lg border-2 border-slate-300 dark:border-slate-600 bg-white ${ring}">
+            ${tag}
+            <button ${st.done ? 'disabled' : ''} onclick="pickOpt('${prefix}', ${i}, '${side}')" class="w-full py-2 rounded-lg border font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed ${sel ? 'border-sky-500 bg-sky-500/10 text-sky-600 dark:text-sky-400' : 'border-slate-300 dark:border-slate-600 hover:border-sky-500'}">${lang === 'en' ? u(prefix, 'choose') + ' ' + side.toUpperCase() : side.toUpperCase() + ' ' + u(prefix, 'choose')}</button>
+        </div>`;
+    };
+    let fb = '';
+    if (st.done) fb = `<div class="text-[11px] rounded-lg p-2 bg-slate-500/10 text-slate-600 dark:text-slate-300">${i === L.tasks.length - 1 ? u(prefix, 'acceptedLast') : u(prefix, 'accepted')}</div>`;
+    else if (st.pick) fb = `<div class="text-[11px] rounded-lg p-2 bg-sky-500/10 text-sky-600 dark:text-sky-400">${u(prefix, 'picked').replace('{s}', st.pick.toUpperCase())}</div>`;
+    return `
+        <div class="flex items-center justify-between gap-2">
+            <b class="text-slate-700 dark:text-slate-200">${tk.id} &mdash; ${esc(pick(tk.title))}</b>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap ${badge[1]}">${u(prefix, badge[0])}</span>
+        </div>
+        ${tk.ctx ? `<div class="text-[11px] italic bg-slate-100 dark:bg-slate-900 rounded-lg p-2 text-slate-600 dark:text-slate-300">${esc(pick(tk.ctx))}</div>` : ''}
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">${esc(pick(tk.hint))}</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${sidesOf(prefix, i).map(col).join('')}</div>
+        ${fb}
+        <div class="space-y-1">
+            <label for="${prefix}-t${i}-comment" class="block font-semibold text-slate-600 dark:text-slate-300">${u(prefix, 'commentLabel')}</label>
+            <textarea id="${prefix}-t${i}-comment" rows="4" ${canType ? '' : 'disabled'} oninput="onComment('${prefix}', ${i})" placeholder="${esc(canType ? u(prefix, 'ph1') : u(prefix, 'ph0'))}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-sky-500 disabled:opacity-50 disabled:cursor-not-allowed">${esc(st.comment)}</textarea>
+            <div class="flex items-center justify-between">
+                <span id="${prefix}-t${i}-counter" class="text-[10px] text-slate-500">${len} / ${MIN_COMMENT}</span>
+                <button id="${prefix}-t${i}-submit" onclick="submitTask('${prefix}', ${i})" ${(canType && len >= MIN_COMMENT) ? '' : 'disabled'} class="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-4 py-2 rounded-lg transition">${u(prefix, 'send')}</button>
+            </div>
+        </div>`;
+}
+
+function renderTask(prefix, i) {
+    const el = document.getElementById(prefix + '-task' + i);
+    if (!el) return;
+    el.className = panelClass(prefix, i);
+    el.innerHTML = panelHTML(prefix, i);
+}
+
+function resultsHTML(prefix) {
+    const L = LABS[prefix];
+    const { c, perCat } = calcScore(prefix), n = L.tasks.length, pct = Math.round(c / n * 100);
+    const lv = pct >= 90 ? 0 : pct >= 75 ? 1 : pct >= 55 ? 2 : 3;
+    const col = ['emerald', 'sky', 'amber', 'rose'][lv];
+    const colCls = { emerald: 'text-emerald-500 border-emerald-500/40 bg-emerald-500/10', sky: 'text-sky-500 border-sky-500/40 bg-sky-500/10', amber: 'text-amber-500 border-amber-500/40 bg-amber-500/10', rose: 'text-rose-500 border-rose-500/40 bg-rose-500/10' }[col];
+    let h = `<div class="rounded-xl border-2 ${colCls} p-4 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div><div class="text-[10px] uppercase tracking-wider font-bold">${u(prefix, 'resTitle')}</div>
+                 <div class="text-3xl font-extrabold">${c} / ${n} <span class="text-base font-bold">(${pct}%)</span></div></div>
+            <div class="text-sm font-bold px-3 py-1 rounded-full border ${colCls}">${pick(COMMON_UI.levels[lv])}</div>
+        </div>
+        <div><div class="text-[10px] uppercase tracking-wider font-bold mb-1 text-slate-500">${u(prefix, 'resBy')}</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-slate-700 dark:text-slate-200">`;
+    L.cats.forEach((ct, ci) => { h += `<div class="flex justify-between bg-white/60 dark:bg-slate-900/60 rounded px-2 py-1"><span>${ct.n}</span><b>${perCat[ci][0]} / ${perCat[ci][1]}</b></div>`; });
+    h += `</div></div>
+        <div><div class="text-[10px] uppercase tracking-wider font-bold mb-1 text-slate-500">${u(prefix, 'resReview')}</div><div class="space-y-2">`;
+    L.tasks.forEach((t, i) => {
+        const ok = isCorrect(prefix, i);
+        h += `<div class="bg-white dark:bg-slate-800 rounded-lg p-3 border ${ok ? 'border-emerald-500/50' : 'border-rose-500/50'} text-slate-700 dark:text-slate-200 space-y-1">
+            <div class="flex items-center justify-between gap-2"><b>${t.id} &mdash; ${esc(pick(t.title))}</b><span class="font-bold ${ok ? 'text-emerald-500' : 'text-rose-500'}">${ok ? '✓' : '✕'}</span></div>
+            <div class="text-[11px]">${u(prefix, 'yourPick')}: <b>${L.state[i].pick.toUpperCase()}</b> &nbsp;|&nbsp; ${u(prefix, 'correctIs')}: <b>${correctSide(prefix, i).toUpperCase()}</b></div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">${esc(pick(t.why))}</div></div>`;
+    });
+    h += `</div></div>
+        <button onclick="restartLab('${prefix}')" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-4 py-2 rounded-lg transition"><i class="fa-solid fa-rotate-right mr-1"></i>${u(prefix, 'retry')}</button>
+    </div>`;
+    return h;
+}
+function renderResults(prefix) {
+    const el = document.getElementById(prefix + '-lab-results');
+    if (!el) return;
+    el.innerHTML = allDone(prefix) ? `<div class="rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-500/10 p-4 text-center text-slate-600 dark:text-slate-300 font-semibold"><i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>${pick(["Barcha savollar yuborildi.", "All questions have been submitted."])}</div>` : '';
+}
+function renderProgress(prefix) {
+    const L = LABS[prefix], n = doneCount(prefix);
+    const p = document.getElementById(prefix + '-lab-progress'), b = document.getElementById(prefix + '-lab-bar');
+    if (!p) return;
+    p.textContent = u(prefix, 'progress') + ': ' + n + ' / ' + L.tasks.length;
+    b.style.width = (n / L.tasks.length * 100) + '%';
+}
+function renderLab(prefix, titleUI, subUI, icon) {
+    const L = LABS[prefix];
+    const root = document.getElementById(L.rootId);
+    if (!root) return;
+    let h = `<div>
+        <h2 class="text-lg font-bold text-amber-600 dark:text-amber-400 mb-1 flex items-center gap-2"><i class="fa-solid ${icon}"></i> ${pick(titleUI)}</h2>
+        <p class="text-xs text-slate-500">${pick(subUI)}</p>
+        <div class="mt-3 flex items-center gap-3">
+            <div class="flex-1 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden"><div id="${prefix}-lab-bar" class="h-full bg-emerald-500 transition-all" style="width:0%"></div></div>
+            <span id="${prefix}-lab-progress" class="text-[11px] font-semibold text-slate-500 whitespace-nowrap"></span>
+        </div>
+    </div><div class="space-y-4 text-xs">`;
+    L.cats.forEach((c, ci) => {
+        h += `<div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+            <span class="font-bold ${c.txt} uppercase tracking-wider text-[10px]">${c.n}</span>`;
+        L.tasks.forEach((t, i) => { if (t.cat === ci) h += `<div id="${prefix}-task${i}" class="${panelClass(prefix, i)}">${panelHTML(prefix, i)}</div>`; });
+        h += '</div>';
+    });
+    root.innerHTML = h + `</div><div id="${prefix}-lab-results" class="text-xs"></div>`;
+    renderProgress(prefix);
+    renderResults(prefix);
+}
+
+function pickOpt(prefix, i, side) {
+    const st = LABS[prefix].state[i];
+    if (i > doneCount(prefix) || st.done) return;
+    if (st.pick && st.pick !== side) st.changes++;
+    st.pick = side;
+    renderTask(prefix, i);
+    const ta = document.getElementById(prefix + '-t' + i + '-comment');
+    if (ta) ta.focus({ preventScroll: true });
+}
+function onComment(prefix, i) {
+    const st = LABS[prefix].state[i], ta = document.getElementById(prefix + '-t' + i + '-comment');
+    st.comment = ta.value;
+    const len = st.comment.trim().length;
+    document.getElementById(prefix + '-t' + i + '-counter').textContent = len + ' / ' + MIN_COMMENT;
+    document.getElementById(prefix + '-t' + i + '-submit').disabled = !(st.pick && len >= MIN_COMMENT && !st.done);
+}
+function submitTask(prefix, i) {
+    const L = LABS[prefix], st = L.state[i], tk = L.tasks[i], comment = st.comment.trim();
+    if (!st.pick || comment.length < MIN_COMMENT || st.done || i > doneCount(prefix)) return;
+    st.done = true;
+    updateResLock();
+    const sp = specOf(prefix, i, st.pick);
+    logActivity('[' + prefix.toUpperCase() + '] ' + tk.id + ' | tanlov: ' + st.pick.toUpperCase() + ' (' + sp.k + ') | natija: ' + (sp.ok ? "to'g'ri" : "xato") +
+        ' | tanlovni o\'zgartirish: ' + st.changes + ' | izoh: ' + comment);
+    if (allDone(prefix)) {
+        const { c } = calcScore(prefix), n = L.tasks.length;
+        logActivity('[' + prefix.toUpperCase() + "] Yakuniy natija: " + c + "/" + n + " (" + Math.round(c / n * 100) + "%)");
+        L.tasks.forEach((_, x) => renderTask(prefix, x));
+        renderProgress(prefix);
+        renderResults(prefix);
+        document.getElementById(prefix + '-lab-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+    }
+    renderTask(prefix, i);
+    renderTask(prefix, i + 1);
+    renderProgress(prefix);
+    const nx = document.getElementById(prefix + '-task' + (i + 1));
+    if (nx) nx.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function restartLab(prefix) {
+    const L = LABS[prefix];
+    L.tasks.forEach((_, i) => { L.state[i] = newState(prefix, i); });
+    logActivity('[' + prefix.toUpperCase() + '] Laboratoriya qaytadan boshlandi');
+    renderAllLabs();
+    document.getElementById(L.rootId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ===================== Amaliy Laboratoriya 2: interaktiv terminal (Linux) =====================
+const PL2_CATS = [
+    { n: '1. Phishing Simulyatsiyasi va Server', txt: 'text-emerald-500', bd: 'border-emerald-500/40' },
+    { n: '2. Email Header va Domen Tahlili', txt: 'text-amber-500', bd: 'border-amber-500/40' },
+    { n: '3. Zararli Fayllarni Tahlil Qilish', txt: 'text-sky-500', bd: 'border-sky-500/40' },
+    { n: '4. Tarmoq Trafigini Tahlil Qilish', txt: 'text-rose-500', bd: 'border-rose-500/40' }
+];
+
+const F = (s, meta) => Object.assign({ __dir: false, content: s }, meta || {}); // fayl tuguni
+const D = children => ({ __dir: true, children }); // papka tuguni
+
+// ---- Fayl tizimi: har bir topshiriq o'z papkasida, ba'zilarida yashirin (.) fayllar bor ----
+const PL2_FS = D({
+    'README.txt': F(["Solis xavfsizlik laboratoriyasi serveriga ulandingiz.\nAsosiy buyruqlar: ls (-a bilan yashirin fayllarni ham ko'rsatadi), cd, cat, head, tail.\nTahlil vositalari: file, sha256sum, strings, dig, whois, grep (-i/-c), wc -l.\nKonveyer (pipe) qo'llab-quvvatlanadi: masalan 'strings drayver.exe | grep -i http'.\nJavobni va bayroqni (flag) o'ngdagi kartochkaga yozing. 'hint <№>' yordam beradi.",
+        "Connected to the Solis security lab server.\nCore commands: ls (-a also shows hidden files), cd, cat, head, tail.\nAnalysis tools: file, sha256sum, strings, dig, whois, grep (-i/-c), wc -l.\nPipes are supported: e.g. 'strings drayver.exe | grep -i http'.\nType the answer and flag into the card on the right. 'hint <№>' gives help."]),
+
+    // ---- 1.1 GoPhish: 3 config + yashirin fayl ----
+    'task1_gophish_config': D({
+        'config_a.json': F('{\n  "admin_server": { "listen_url": "0.0.0.0:3333" },\n  "phish_server": { "listen_url": "0.0.0.0:80" }\n}'),
+        'config_b.json': F('{\n  "admin_server": { "listen_url": "127.0.0.1:3333" },\n  "phish_server": { "listen_url": "0.0.0.0:80" }\n}'),
+        'config_c.json': F('{\n  "admin_server": { "listen_url": "0.0.0.0:3333", "use_tls": false },\n  "phish_server": { "listen_url": "0.0.0.0:80" }\n}'),
+        '.audit_note': F('Haftalik audit: config_b.json - xavfsiz andoza sifatida tasdiqlangan.\n# AUDIT TAG: SEC{admin-bound-localhost}')
+    }),
+    // ---- 1.2 Nginx: fayl turi bilan aldash ----
+    'task1_nginx_site': D({
+        'site_a.conf': F('server {\n  listen 127.0.0.1:8080;\n  server_name phish-lab.local;\n  root /var/www/phish-lab;\n}'),
+        'site_b.conf': F('server {\n  listen 0.0.0.0:443 ssl;\n  server_name login.navrozbank.uz;\n  root /var/www/bank-clone;\n}'),
+        'logo.png': F('MZ\\x90\\x00\\x03\\x00\\x00\\x00\\x04\\x00\\x00\\x00\\xff\\xff\\x00\\x00 (ikkilik ma\'lumot, PNG emas)', { filetype: ["PE32 executable (GUI) Intel 80386, for MS Windows", "PE32 executable (GUI) Intel 80386, for MS Windows"], hash: 'c1a9f7e2b3d84a5e6f10293b7c4d5e6f1a2b3c4d5e6f7081920a1b2c3d4e5f60' }),
+        'favicon.ico': F('(ikon fayli, standart ICO tuzilmasi)', { filetype: ["MS Windows icon resource", "MS Windows icon resource"] })
+    }),
+    // ---- 2.1 dig/whois uchun domenlar bazasi (fayl emas, DNS_DB/WHOIS_DB orqali) ----
+
+    // ---- 3.1 sha256sum + hash bazasi ----
+    'task3_file_hash': D({
+        'hisobot_2026.pdf': F('%PDF-1.7 ...(normal hujjat baytlari)...', { filetype: ["PDF document, version 1.7", "PDF document, version 1.7"], hash: '4e3d2c1b0a99887766554433221100ffeeddccbbaa99887766554433221100' }),
+        'drayver_yangi.pdf': F('MZ\\x90\\x00...(PE sarlavha baytlari, .pdf deb nomlangan)...', { filetype: ["PE32 executable (GUI) Intel 80386, for MS Windows", "PE32 executable (GUI) Intel 80386, for MS Windows"], hash: '7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b' }),
+        'known_malware_hashes.db': F('# Threat-intel ma\'lumotlar bazasi (SHA-256 -> yorliq)\n1111111111111111111111111111111111111111111111111111111111111111: Emotet.Loader\n2222222222222222222222222222222222222222222222222222222222222222: AgentTesla\n7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b: TrojanDownloader.GenKryptik\nc1a9f7e2b3d84a5e6f10293b7c4d5e6f1a2b3c4d5e6f7081920a1b2c3d4e5f60: TrojanDownloader.GenKryptik\n3333333333333333333333333333333333333333333333333333333333333333: Smishing.Kit\n# agar sha256sum natijasi shu ro\'yxatda topilsa, fayl zararli deb hisoblanadi\n# AUDIT TAG: SEC{hash-matched-malware}')
+    }),
+    // ---- 3.2 strings | grep ----
+    'task3_strings': D({
+        'drayver.exe.strings': F('KERNEL32.dll\nUSER32.dll\nGetProcAddress\nLoadLibraryA\nMSVCRT.dll\n.rdata\n.text\nCreateFileA\nWriteFile\nCloseHandle\nGetModuleHandleA\nExitProcess\nVirtualAlloc\nRegOpenKeyExA\nRegSetValueExA\nkernel32.dll'),
+        'drayver_v2.exe.strings': F('KERNEL32.dll\nWININET.dll\nInternetOpenA\nInternetConnectA\nHttpSendRequestA\nHTTP://185.23.11.47/payload.exe\nhttp://185.23.11.47/gate.php\nMSVCRT.dll\nGetProcAddress\nCreateProcessA\nWriteFile\n.rdata\n.text\nExitProcess\nRegSetValueExA')
+    }),
+    // ---- 4.1 HTTP vs HTTPS (uzun capture) ----
+    'task4_traffic': D({
+        'capture_https.txt': F('IP 10.0.0.5.51400 > 10.0.0.10.443: Flags [S]\nTLSv1.3 Client Hello\nIP 10.0.0.10.443 > 10.0.0.5.51400: Flags [S.]\nTLSv1.3 Server Hello\nTLSv1.3 Certificate\nTLSv1.3 Application Data (encrypted)\nTLSv1.3 Application Data (encrypted)\nTLSv1.3 Application Data (encrypted)\nIP 10.0.0.5.51400 > 10.0.0.10.443: Flags [F.]'),
+        'capture_http.txt': F('IP 10.0.0.5.51500 > 10.0.0.10.80: Flags [S]\nIP 10.0.0.10.80 > 10.0.0.5.51500: Flags [S.]\nGET /login HTTP/1.1\nHost: phish-lab.local\nUser-Agent: Mozilla/5.0\nAccept: text/html\nIP 10.0.0.5.51500 > 10.0.0.10.80: Flags [P]\nPOST /login HTTP/1.1\nHost: phish-lab.local\nContent-Type: application/x-www-form-urlencoded\nContent-Length: 34\nusername=aziz&Password=Parol2026\nIP 10.0.0.10.80 > 10.0.0.5.51500: Flags [P]\nHTTP/1.1 302 Found\nLocation: /dashboard\nIP 10.0.0.5.51500 > 10.0.0.10.80: Flags [F.]')
+    }),
+    // ---- 4.2 DNS tunneling (uzun capture) ----
+    'task4_dns_tunnel': D({
+        'capture_dns_normal.txt': F('10.0.0.5 > A? click.uz\n10.0.0.5 > A? google.com\n10.0.0.5 > A? github.com\n10.0.0.5 > A? navrozbank.uz\n10.0.0.5 > A? payme.uz'),
+        'capture_dns_tunnel.txt': F(['10.0.0.5 > A? click.uz', '10.0.0.5 > A? f4a9c1e2b7d1.evil-exfil.com', '10.0.0.5 > A? 9a01dd44ffb2.evil-exfil.com', '10.0.0.5 > A? 2bb671ac05e9.evil-exfil.com', '10.0.0.5 > A? 88c3a0f9e1d2.evil-exfil.com', '10.0.0.5 > A? 5de4b1c8a7f6.evil-exfil.com', '10.0.0.5 > A? 0a1b2c3d4e5f.evil-exfil.com', '10.0.0.5 > A? google.com', '10.0.0.5 > A? aa11bb22cc33.evil-exfil.com', '10.0.0.5 > A? dd44ee55ff66.evil-exfil.com'].join('\n'))
+    })
+});
+
+// ---- DNS va WHOIS "xizmatlari" (dig / whois buyruqlari to'g'ridan-to'g'ri so'raladi) ----
+const DNS_DB = {
+    'click.uz': { TXT: ['"v=spf1 include:_spf.click.uz -all"'], A: ['91.202.12.4'] },
+    'click-support.info': { TXT: [], A: ['185.44.77.12'] },
+    'navrozbank.uz': { TXT: ['"v=spf1 include:_spf.navrozbank.uz -all"'], A: ['212.158.3.9'] },
+    'navroz-bank-uz.info': { TXT: [], A: ['45.137.22.6'] }
+};
+const WHOIS_DB = {
+    'click.uz': ['Domain Name: CLICK.UZ', 'Creation Date: 2014-02-18', 'Registrant Organization: "Click" MChJ', 'Registrar: uz-domains registrar'],
+    'click-support.info': ['Domain Name: CLICK-SUPPORT.INFO', 'Creation Date: 2026-09-24', 'Registrant Organization: REDACTED FOR PRIVACY', 'Registrar: cheap-domains-registrar'],
+    'navrozbank.uz': ['Domain Name: NAVROZBANK.UZ', 'Creation Date: 2015-03-11', 'Registrant Organization: "Navroz Bank" ATB', 'Registrar: uz-domains registrar'],
+    'navroz-bank-uz.info': ['Domain Name: NAVROZ-BANK-UZ.INFO', 'Creation Date: 2026-09-27', 'Registrant Organization: REDACTED FOR PRIVACY', 'Registrar: cheap-domains-registrar']
+};
+
+const PL2_TASKS = [
+    { id: 'PL 1.1', cat: 0, dir: 'task1_gophish_config',
+      title: ["GoPhish: 3 konfiguratsiyadan qaysi biri andoza sifatida tasdiqlangan?", "GoPhish: which of the 3 configs was approved as the template?"],
+      ctx: ["Siz o'quv phishing kampaniyasi uchun GoPhish serverini audit qilyapsiz.", "You are auditing a GoPhish server for a training phishing campaign."],
+      q: ["Admin panel (admin_server) faqat lokalda (127.0.0.1) ochiq bo'lgan fayl nomini yozing.", "Write the name of the file where the admin panel (admin_server) is open only locally (127.0.0.1)."],
+      qHint: ["task1_gophish_config papkasida 3 ta .json fayl bor — har birini cat qiling va admin_server qiymatini solishtiring.", "The task1_gophish_config folder has 3 .json files — cat each one and compare the admin_server value."],
+      answers: ['config_b.json'],
+      flag: 'SEC{admin-bound-localhost}',
+      flagHint: ["'ls' oddiy fayllarnigina ko'rsatadi. Yashirin (nuqta bilan boshlangan) faylni ko'rish uchun 'ls -a' dan foydalaning.", "Plain 'ls' only shows regular files. Use 'ls -a' to see the hidden (dot) file too."],
+      why: ["config_b.json da admin_server faqat 127.0.0.1:3333 (lokal) da ochiq. config_a.json va config_c.json da esa 0.0.0.0:3333 — butun tarmoqdan boshqaruv paneliga kirish mumkin. Audit yozuvi yashirin .audit_note faylida saqlangan — uni faqat 'ls -a' orqali topish mumkin edi.",
+            "In config_b.json, admin_server is open only on 127.0.0.1:3333 (local). In config_a.json and config_c.json it's on 0.0.0.0:3333 — reachable from the whole network. The audit note was kept in the hidden .audit_note file, findable only with 'ls -a'."] },
+    { id: 'PL 1.2', cat: 0, dir: 'task1_nginx_site',
+      ctx: ["setoolkit (SET) bilan yaratilgan soxta login sahifa papkasida kutilmagan fayllar bor.", "The folder for the fake login page created with setoolkit (SET) contains unexpected files."],
+      title: ["Nginx papkasida qaysi fayl o'zini rasm qilib ko'rsatadi?", "Which file in the Nginx folder disguises itself as an image?"],
+      q: ["Nomi .png bo'lsa-da, aslida Windows dasturi (.exe) bo'lgan fayl nomini yozing.", "Write the name of the file that is named .png but is actually a Windows program (.exe)."],
+      qHint: ["task1_nginx_site papkasiga kiring, 'file <fayl>' buyrug'i bilan har bir faylning haqiqiy turini tekshiring (kengaytmaga emas!).", "Enter task1_nginx_site and use 'file <filename>' to check each file's real type (not its extension!)."],
+      answers: ['logo.png'],
+      flag: 'SEC{hash-matched-malware}',
+      flagHint: ["Shubhali faylning sha256sum qiymatini oling, so'ng shu hashni task3_file_hash papkasidagi known_malware_hashes.db faylidan 'grep' qiling — javob bayroq shu yerda yozilgan.", "Get the suspicious file's sha256sum, then 'grep' that hash in the known_malware_hashes.db file inside task3_file_hash — the flag is written right there."],
+      why: ["`file logo.png` uni «PE32 executable... for MS Windows» deb aniqlaydi — bu aslida Windows dasturi, PNG emas. `file` fayl kengaytmasiga emas, ichidagi bayt-imzoga qarab aniqlaydi. Uning sha256sum qiymati known_malware_hashes.db bazasida «TrojanDownloader.GenKryptik» sifatida qayd etilgan.",
+            "`file logo.png` identifies it as «PE32 executable... for MS Windows» — it's actually a Windows program, not a PNG. `file` reads the byte signature inside, not the extension. Its sha256sum is listed in known_malware_hashes.db as «TrojanDownloader.GenKryptik»."] },
+    { id: 'PL 2.1', cat: 1, dir: null,
+      title: ["dig: qaysi domenda SPF yozuvi bor?", "dig: which domain has an SPF record?"],
+      q: ["SPF yozuvi (v=spf1...) topilgan ikkala domendan qaysi biri BANK bilan bog'liq emas (haqiqiy to'lov xizmati)?", "Of the two domains with an SPF record (v=spf1...), which one is NOT bank-related (the real payment service)?"],
+      qHint: ["Terminalga to'g'ridan-to'g'ri yozing: 'dig click.uz TXT', 'dig click-support.info TXT', 'dig navrozbank.uz TXT', 'dig navroz-bank-uz.info TXT'.", "Type directly into the terminal: 'dig click.uz TXT', 'dig click-support.info TXT', 'dig navrozbank.uz TXT', 'dig navroz-bank-uz.info TXT'."],
+      answers: ['click.uz'],
+      flag: 'SEC{spf-present}',
+      flagHint: ["SPF topilgan ikkala domenning 'dig ... TXT' natijasidagi oxirgi qatoriga qarang.", "Look at the last line of the 'dig ... TXT' result for both domains that have SPF."],
+      why: ["click.uz va navrozbank.uz — ikkalasida ham SPF yozuvi bor (ikkalasi ham haqiqiy, uzoq vaqtdan beri ishlayotgan tashkilotlar). click-support.info va navroz-bank-uz.info da esa SPF umuman yo'q — bu ularning yangi/shubhali ekanini ko'rsatadi. Savolda so'ralgani: SPF borlardan qaysi biri bank EMAS — bu click.uz (to'lov xizmati).",
+            "Both click.uz and navrozbank.uz have an SPF record (both are real, long-established organizations). click-support.info and navroz-bank-uz.info have no SPF at all — a sign they are new/suspicious. The question asks which of the SPF-having domains is NOT a bank — that is click.uz (a payment service)."] },
+    { id: 'PL 2.2', cat: 1, dir: null,
+      title: ["whois: qaysi domen eng yaqinda ro'yxatdan o'tgan?", "whois: which domain was registered most recently?"],
+      q: ["To'rtta domendan (click.uz, click-support.info, navrozbank.uz, navroz-bank-uz.info) eng yaqinda ro'yxatdan o'tganini yozing.", "Of the four domains (click.uz, click-support.info, navrozbank.uz, navroz-bank-uz.info), write the one registered most recently."],
+      qHint: ["Har birini alohida so'rang: 'whois click.uz', 'whois click-support.info', 'whois navrozbank.uz', 'whois navroz-bank-uz.info' va Creation Date larni solishtiring.", "Query each separately: 'whois click.uz', 'whois click-support.info', 'whois navrozbank.uz', 'whois navroz-bank-uz.info' and compare the Creation Date values."],
+      answers: ['navroz-bank-uz.info'],
+      flag: 'SEC{freshly-registered}',
+      flagHint: ["Eng yangi domenning whois natijasidagi oxirgi qatoriga qarang.", "Look at the last line of the whois result for the newest domain."],
+      why: ["navroz-bank-uz.info 2026-09-27 da, ya'ni so'nggi kunlarda ro'yxatdan o'tgan va registranti yashirilgan — bu typosquatting/phishing domeniga xos belgi. Qolgan uchtasi yillar oldin ro'yxatdan o'tgan va ochiq tashkilot nomiga ega.",
+            "navroz-bank-uz.info was registered on 2026-09-27, just days ago, and its registrant is hidden — a typical sign of a typosquatting/phishing domain. The other three were registered years ago under an open organization name."] },
+    { id: 'PL 3.1', cat: 2, dir: 'task3_file_hash',
+      title: ["sha256sum + threat-intel: qaysi fayl ma'lum zararli dastur?", "sha256sum + threat intel: which file is known malware?"],
+      q: ["Hash bazasida zararli deb topilgan faylning sha256 qiymatini yozing.", "Write the sha256 value of the file identified as malicious in the hash database."],
+      qHint: ["task3_file_hash papkasida 'sha256sum hisobot_2026.pdf' va 'sha256sum drayver_yangi.pdf' ni ishga tushiring, so'ng natijalarni 'cat known_malware_hashes.db' bilan solishtiring.", "In task3_file_hash run 'sha256sum hisobot_2026.pdf' and 'sha256sum drayver_yangi.pdf', then compare the results with 'cat known_malware_hashes.db'."],
+      answers: ['7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b'],
+      flag: 'SEC{hash-matched-malware}',
+      flagHint: ["Mos kelgan hash yozilgan qatordan keyingi # bilan boshlangan qatorga qarang (known_malware_hashes.db faylining oxiri).", "Look at the # line right after the matching hash entry (end of known_malware_hashes.db)."],
+      why: ["drayver_yangi.pdf nomi .pdf bo'lsa-da, `file` uni PE32 (Windows dasturi) deb aniqlaydi, va uning sha256sum qiymati known_malware_hashes.db bazasida «TrojanDownloader.GenKryptik» sifatida ro'yxatda turibdi. hisobot_2026.pdf esa haqiqiy PDF va bazada yo'q.",
+            "drayver_yangi.pdf is named .pdf but `file` identifies it as a PE32 (Windows program), and its sha256sum is listed in known_malware_hashes.db as «TrojanDownloader.GenKryptik». hisobot_2026.pdf is a genuine PDF and is not in the database."] },
+    { id: 'PL 3.2', cat: 2, dir: 'task3_strings',
+      title: ["strings | grep: yashirin boshqaruv serveri (C2) manzili", "strings | grep: hidden command-and-control (C2) address"],
+      q: ["Zararli faylda yashiringan C2 IP manzilini yozing.", "Write the C2 IP address hidden in the malicious file."],
+      qHint: ["'strings drayver_v2.exe.strings | grep -i http' ni ishga tushiring — katta-kichik harf farqiga e'tibor bering (HTTP va http aralash).", "Run 'strings drayver_v2.exe.strings | grep -i http' — note the mixed-case (HTTP and http) in the output."],
+      answers: ['185.23.11.47'],
+      flag: 'SEC{c2-ip-found}',
+      flagHint: ["IP manzilini toping, so'ng flag sifatida 'SEC{c2-ip-found}' ni yuboring — bu ikkala havolada ham takrorlanadi.", "Find the IP, then submit 'SEC{c2-ip-found}' as the flag — it repeats in both links."],
+      why: ["drayver_v2.exe.strings ichida HTTP://185.23.11.47/payload.exe (katta harflarda) va http://185.23.11.47/gate.php qatorlari bor — 'grep http' katta-kichik harfni farqlaganda birinchisini o'tkazib yuborishi mumkin, shuning uchun '-i' bayrog'i zarur. drayver.exe.strings da esa hech qanday http havolasi yo'q.",
+            "drayver_v2.exe.strings contains HTTP://185.23.11.47/payload.exe (uppercase) and http://185.23.11.47/gate.php — a case-sensitive 'grep http' could miss the first one, hence the need for the '-i' flag. drayver.exe.strings contains no http link at all."] },
+    { id: 'PL 4.1', cat: 3, dir: 'task4_traffic',
+      ctx: ["Talaba soxta login sahifasiga login va parolni kiritdi, siz trafikni tutib olyapsiz.", "A trainee entered a login and password into the fake login page; you are capturing the traffic."],
+      title: ["grep -i: ochiq matndagi parolni toping", "grep -i: find the plaintext password"],
+      q: ["Ochiq matnda (plaintext) ko'ringan parol nimaga teng?", "What is the password that appears in plaintext?"],
+      qHint: ["task4_traffic papkasida 'grep -i password capture_http.txt' ni sinab ko'ring (maydon nomi katta harf bilan yozilgan bo'lishi mumkin).", "In task4_traffic try 'grep -i password capture_http.txt' (the field name may be capitalized)."],
+      answers: ['Parol2026', 'parol2026'],
+      flag: 'SEC{plaintext-password}',
+      flagHint: ["Parol topilgan qatorning formatiga qarang: username=...&Password=... Bu qatorni o'zi — dalil.", "Look at the format of the line where the password appears: username=...&Password=... This line itself is the evidence."],
+      why: ["capture_http.txt da POST so'rovida «username=aziz&Password=Parol2026» ochiq matnda ko'rinadi (maydon nomi katta harf bilan — shuning uchun 'grep -i' kerak). capture_https.txt da esa faqat shifrlangan «Application Data» ko'rinadi, forma mazmuni yashirin.",
+            "In capture_http.txt, the POST request shows «username=aziz&Password=Parol2026» in the clear (the field name is capitalized — hence the need for 'grep -i'). capture_https.txt shows only encrypted «Application Data»; the form content is hidden."] },
+    { id: 'PL 4.2', cat: 3, dir: 'task4_dns_tunnel',
+      title: ["grep -c: DNS tunneling hajmini o'lchash", "grep -c: measuring DNS tunneling volume"],
+      q: ["capture_dns_tunnel.txt faylida 'evil-exfil.com' ga nechta so'rov yuborilgan? (raqam)", "How many queries to 'evil-exfil.com' are in capture_dns_tunnel.txt? (number)"],
+      qHint: ["'grep -c evil-exfil.com capture_dns_tunnel.txt' ni ishga tushiring va natijani 'capture_dns_normal.txt' bilan solishtiring.", "Run 'grep -c evil-exfil.com capture_dns_tunnel.txt' and compare the result with 'capture_dns_normal.txt'."],
+      answers: ['8'],
+      flag: 'SEC{dns-tunneling}',
+      flagHint: ["Domen nomining o'zi flag emas — bu DNS tunneling hujumining umumiy nomi: SEC{dns-tunneling}.", "The domain name itself is not the flag — it's the general name of the attack: SEC{dns-tunneling}."],
+      why: ["capture_dns_tunnel.txt da 10 ta so'rovdan 8 tasi uzun, tasodifiy subdomenlar bilan evil-exfil.com ga yo'nalgan — bu ma'lumotni subdomen nomlariga yashirib chiqarib yuborishning klassik belgisi (DNS tunneling). capture_dns_normal.txt da esa evil-exfil.com ga umuman so'rov yo'q, faqat tanish saytlar bor.",
+            "In capture_dns_tunnel.txt, 8 of 10 queries go to evil-exfil.com with long, random-looking subdomains — a classic sign of hiding data in subdomain names and exfiltrating it (DNS tunneling). capture_dns_normal.txt has no queries to evil-exfil.com at all, only familiar sites."] }
+];
+
+// ---- VFS yordamchilari ----
+function pl2Resolve(pathStr) {
+    let segs;
+    if (pathStr === undefined || pathStr === '') segs = pl2.cwd.slice();
+    else if (pathStr === '~') segs = [];
+    else {
+        segs = pl2.cwd.slice();
+        let parts = pathStr.split('/').filter(Boolean);
+        if (pathStr.startsWith('~') || pathStr.startsWith('/')) segs = [];
+        parts.forEach(p => {
+            if (p === '.' || p === '~') return;
+            if (p === '..') { if (segs.length) segs.pop(); }
+            else segs.push(p);
+        });
+    }
+    let node = PL2_FS;
+    for (const s of segs) {
+        if (!node.__dir || !node.children[s]) return null;
+        node = node.children[s];
+    }
+    return { node, segs };
+}
+function pl2Prompt() { return 'intern@solis:~' + (pl2.cwd.length ? '/' + pl2.cwd.join('/') : '') + '$'; }
+function pl2FileLines(node) {
+    if (Array.isArray(node.content)) return pick(node.content).split('\n');
+    return String(node.content).split('\n');
+}
+function pl2FakeSha(filename) {
+    let h = 0; for (let i = 0; i < filename.length; i++) h = (h * 131 + filename.charCodeAt(i)) >>> 0;
+    let hex = h.toString(16); while (hex.length < 8) hex = '0' + hex;
+    return (hex + hex + hex + hex + hex + hex + hex + hex).slice(0, 64);
+}
+
+const pl2 = {
+    cwd: [],
+    history: [],
+    state: PL2_TASKS.map(() => ({ qVal: '', qStatus: null, qWrong: 0, qAttempts: 0, flagVal: '', flagStatus: null, flagWrong: 0, flagAttempts: 0, hintsUsed: 0, done: false, showHint: false, showFlagHint: false })),
+    booted: false
+};
+
+function pl2Print(type, text) { pl2.history.push({ type, text }); }
+function pl2DoneCount() { return pl2.state.filter(s => s.qVal.trim() && s.flagVal.trim()).length; }
+function pl2AnsweredItems() { return pl2.state.reduce((a, s) => a + (s.qVal.trim() ? 1 : 0) + (s.flagVal.trim() ? 1 : 0), 0); }
+function pl2QOk(i) { const v = pl2Norm(pl2.state[i].qVal); return !!v && PL2_TASKS[i].answers.some(a => pl2Norm(a) === v); }
+function pl2FlagOk(i) { const v = pl2Norm(pl2.state[i].flagVal), tk = PL2_TASKS[i]; return !!v && [tk.flag].concat(tk.flag2 ? [tk.flag2] : []).some(f => pl2Norm(f) === v); }
+function pl2AllDone() { return false; }
+
+function pl2Boot() {
+    pl2Print('out', pick(["Solis xavfsizlik laboratoriyasi serveriga ulandingiz.", "Connected to the Solis security lab server."]));
+    pl2Print('out', pick(["'cat README.txt' bilan boshlang, yoki 'help' buyruqlar uchun.", "Start with 'cat README.txt', or 'help' for commands."]));
+    pl2.booted = true;
+}
+
+// ---- Bitta bosqich (stage) ni bajarish: {lines, error} qaytaradi ----
+function pl2Stage(tokens, inputLines) {
+    const cmd = tokens[0], rest = tokens.slice(1);
+    const flags = rest.filter(a => a.startsWith('-'));
+    const pos = rest.filter(a => !a.startsWith('-'));
+    switch (cmd) {
+        case 'ls': {
+            const showAll = flags.includes('-a') || flags.includes('-la') || flags.includes('-al');
+            const r = pl2Resolve(pos[0]);
+            if (!r || !r.node.__dir) return { error: (pos[0] || '.') + ": No such file or directory" };
+            const names = Object.keys(r.node.children).filter(k => showAll || !k.startsWith('.')).map(k => r.node.children[k].__dir ? k + '/' : k);
+            return { lines: names.length ? names : [] };
+        }
+        case 'cat': {
+            if (!pos[0]) return { error: 'cat: fayl nomini kiriting' };
+            const r = pl2Resolve(pos[0]);
+            if (!r || r.node.__dir) return { error: pos[0] + ": No such file or directory" };
+            return { lines: pl2FileLines(r.node) };
+        }
+        case 'head': case 'tail': {
+            let n = 10; const ni = flags.indexOf('-n');
+            if (ni !== -1 && rest[rest.indexOf('-n') + 1]) n = parseInt(rest[rest.indexOf('-n') + 1], 10) || 10;
+            let lines = inputLines;
+            if (!lines && pos[0]) { const r = pl2Resolve(pos[0]); if (!r || r.node.__dir) return { error: (pos[0] || '') + ": No such file or directory" }; lines = pl2FileLines(r.node); }
+            if (!lines) return { error: cmd + ": kirish fayli yoki konveyer kerak" };
+            return { lines: cmd === 'head' ? lines.slice(0, n) : lines.slice(-n) };
+        }
+        case 'file': {
+            if (!pos[0]) return { error: 'file: fayl nomini kiriting' };
+            const r = pl2Resolve(pos[0]);
+            if (!r || r.node.__dir) return { error: pos[0] + ": No such file or directory" };
+            const ft = r.node.filetype ? pick(r.node.filetype) : (pos[0].endsWith('.pdf') ? 'PDF document' : pos[0].endsWith('.json') || pos[0].endsWith('.conf') ? 'ASCII text' : 'data');
+            return { lines: [pos[0] + ': ' + ft] };
+        }
+        case 'sha256sum': {
+            if (!pos[0]) return { error: 'sha256sum: fayl nomini kiriting' };
+            const r = pl2Resolve(pos[0]);
+            if (!r || r.node.__dir) return { error: pos[0] + ": No such file or directory" };
+            const hash = r.node.hash || pl2FakeSha(pos[0]);
+            return { lines: [hash + '  ' + pos[0]] };
+        }
+        case 'strings': {
+            if (!pos[0]) return { error: 'strings: fayl nomini kiriting' };
+            const r = pl2Resolve(pos[0]);
+            if (!r || r.node.__dir) return { error: pos[0] + ": No such file or directory" };
+            return { lines: pl2FileLines(r.node) };
+        }
+        case 'dig': {
+            const domain = pos[0], type = (pos[1] || 'A').toUpperCase();
+            if (!domain) return { error: 'dig: domen nomini kiriting, masalan: dig click.uz TXT' };
+            const rec = DNS_DB[domain];
+            const head = [';; QUESTION SECTION:', ';' + domain + '.\tIN\t' + type];
+            if (!rec || !rec[type] || !rec[type].length) return { lines: head.concat([';; ANSWER: 0, AUTHORITY: 1, ADDITIONAL: 0', '# hech qanday ' + type + ' yozuv topilmadi']) };
+            return { lines: head.concat(rec[type].map(v => domain + '.\t300\tIN\t' + type + '\t' + v), [';; ANSWER: ' + rec[type].length + ', AUTHORITY: 0, ADDITIONAL: 0']) };
+        }
+        case 'whois': {
+            const domain = pos[0];
+            if (!domain) return { error: 'whois: domen nomini kiriting, masalan: whois click.uz' };
+            const rec = WHOIS_DB[domain];
+            if (!rec) return { lines: ['No match for domain "' + domain.toUpperCase() + '".'] };
+            return { lines: rec.slice() };
+        }
+        case 'grep': {
+            const ci = flags.includes('-i'), count = flags.includes('-c');
+            const pattern = pos[0];
+            let lines = inputLines;
+            if (!lines && pos[1]) { const r = pl2Resolve(pos[1]); if (!r || r.node.__dir) return { error: pos[1] + ": No such file or directory" }; lines = pl2FileLines(r.node); }
+            if (!lines) return { error: 'grep: fayl nomi yoki konveyer kerak' };
+            if (!pattern) return { error: 'grep: izlanadigan so\'zni kiriting' };
+            const test = l => ci ? l.toLowerCase().includes(pattern.toLowerCase()) : l.includes(pattern);
+            const matched = lines.filter(test);
+            return { lines: count ? [String(matched.length)] : matched };
+        }
+        case 'wc': {
+            let lines = inputLines;
+            if (!lines && pos[0]) { const r = pl2Resolve(pos[0]); if (!r || r.node.__dir) return { error: pos[0] + ": No such file or directory" }; lines = pl2FileLines(r.node); }
+            if (!lines) return { error: 'wc: fayl nomi yoki konveyer kerak' };
+            return { lines: [String(lines.length)] };
+        }
+        default:
+            return { error: null }; // boshqa joyda (cd/pwd/...) qayta ishlanadi
+    }
+}
+
+function pl2RunCommand(raw) {
+    const line = raw.trim();
+    if (!line) return;
+    pl2Print('cmd', pl2Prompt() + ' ' + line);
+    const segments = line.split('|').map(s => s.trim()).filter(Boolean);
+    const firstTokens = segments[0].split(/\s+/);
+    const cmd = firstTokens[0], args = firstTokens.slice(1), argStr = args.join(' ');
+
+    if (cmd === 'help') {
+        pl2Print('out', 'ls [-a] [papka] · cd <papka> · cat <fayl> · head/tail [-n N] <fayl> · pwd · whoami · clear · help');
+        pl2Print('out', 'file <fayl> · sha256sum <fayl> · strings <fayl> · dig <domen> [TXT|A] · whois <domen>');
+        pl2Print('out', "grep [-i] [-c] <so'z> [fayl] · wc -l · konveyer: masalan: strings f | grep -i http · hint <topshiriq#>");
+        return;
+    }
+    if (cmd === 'pwd') { pl2Print('out', '/home/intern' + (pl2.cwd.length ? '/' + pl2.cwd.join('/') : '')); return; }
+    if (cmd === 'whoami') { pl2Print('out', 'intern'); return; }
+    if (cmd === 'clear') { pl2.history = []; return; }
+    if (cmd === 'cd') {
+        if (!args[0] || args[0] === '~') { pl2.cwd = []; return; }
+        const r = pl2Resolve(args[0]);
+        if (!r || !r.node.__dir) pl2Print('err', args[0] + ": No such file or directory");
+        else pl2.cwd = r.segs;
+        return;
+    }
+    if (cmd === 'hint') {
+        const t = PL2_TASKS.findIndex(x => x.id === 'PL ' + argStr || x.id.replace('PL ', '') === argStr);
+        if (t === -1) { pl2Print('err', pick(["Topshiriq topilmadi. Masalan: hint 1.1", "Task not found. Example: hint 1.1"])); return; }
+        pl2.state[t].hintsUsed++;
+        pl2.state[t].showHint = true;
+        pl2Print('out', '[' + PL2_TASKS[t].id + '] ' + pick(PL2_TASKS[t].qHint));
+        renderTask2(t);
+        return;
+    }
+
+    // Konveyer (pipeline) orqali bajarish
+    let lines = null, err = null;
+    for (let i = 0; i < segments.length; i++) {
+        const tokens = segments[i].split(/\s+/);
+        const res = pl2Stage(tokens, lines);
+        if (res.error !== undefined && res.error !== null) { err = res.error; break; }
+        if (res.lines === undefined && res.error === null) { err = pick(["buyruq topilmadi: ", "command not found: "]) + tokens[0]; break; }
+        lines = res.lines;
+    }
+    if (err) { pl2Print('err', err); return; }
+    if (lines) { if (!lines.length) pl2Print('out', pick(["(natija yo'q)", "(no output)"])); else lines.forEach(l => pl2Print('out', l)); }
+}
+
+function pl2HandleSubmit(ev) {
+    ev.preventDefault();
+    const input = document.getElementById('pl2-input');
+    pl2RunCommand(input.value);
+    input.value = '';
+    renderPL2Terminal();
+}
+
+function pl2Norm(s) { return String(s || '').trim().toLowerCase(); }
+
+function saveQ(i) { pl2.state[i].qVal = document.getElementById('pl2-q' + i).value; pl2Refresh(i); }
+function saveFlag(i) { pl2.state[i].flagVal = document.getElementById('pl2-flag' + i).value; pl2Refresh(i); }
+function pl2Refresh(i) {
+    updateResLock();
+    const st = pl2.state[i], b = document.getElementById('pl2-badge' + i);
+    if (b) { const d = st.qVal.trim() && st.flagVal.trim(); b.className = 'text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap ' + (d ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'); b.textContent = u2(d ? 'done' : 'active'); }
+    const n = pl2AnsweredItems(), tot = PL2_TASKS.length * 2;
+    const p = document.getElementById('pl2-prog'), bar = document.getElementById('pl2-bar');
+    if (p) p.textContent = pick(["Javob berildi", "Answered"]) + ': ' + n + ' / ' + tot;
+    if (bar) bar.style.width = (n / tot * 100) + '%';
+}
+function pl2Sync() { syncStatsToSheet(); }
+function toggleQHint(i) { pl2.state[i].showHint = !pl2.state[i].showHint; if (pl2.state[i].showHint) pl2.state[i].hintsUsed++; renderTask2(i); }
+function toggleFlagHint(i) { pl2.state[i].showFlagHint = !pl2.state[i].showFlagHint; if (pl2.state[i].showFlagHint) pl2.state[i].hintsUsed++; renderTask2(i); }
+
+
+function pl2TaskScore(i) {
+    const st = pl2.state[i];
+    return Math.max(0, Math.min(100, 100 - 15 * st.hintsUsed - 10 * st.qWrong - 15 * st.flagWrong));
+}
+function pl2TotalScore() { return pl2.state.reduce((a, _, i) => a + pl2TaskScore(i), 0) / PL2_TASKS.length; }
+
+function pl2PanelClass(i) {
+    return 'p-3 bg-white dark:bg-slate-800 border ' + PL2_CATS[PL2_TASKS[i].cat].bd + ' rounded-lg space-y-2.5';
+}
+
+const PL2_UI = {
+    dirHint: ["Papka:", "Folder:"],
+    qLabel: ["Savol", "Question"],
+    flagLabel: ["Bayroq (flag)", "Flag"],
+    check: ["Tekshirish", "Check"],
+    submit: ["Yuborish", "Submit"],
+    hint: ["Yordam", "Hint"],
+    correct: ["✓ To'g'ri", "✓ Correct"],
+    incorrect: ["✕ Xato, qayta urinib ko'ring", "✕ Not correct, try again"],
+    flagCorrect: ["✓ Bayroq qabul qilindi — topshiriq bajarildi!", "✓ Flag accepted — task complete!"],
+    flagIncorrect: ["✕ Bayroq noto'g'ri", "✕ Flag is not correct"],
+    placeholder: ["javobingiz...", "your answer..."],
+    flagPlaceholder: ["SEC{...}", "SEC{...}"],
+    locked: ["Qulfli", "Locked"], active: ["Jarayonda", "In progress"], done: ["Bajarildi", "Completed"]
+};
+const u2 = k => pick(PL2_UI[k]);
+
+function taskHTML2(i) {
+    const tk = PL2_TASKS[i], st = pl2.state[i];
+    const d = st.qVal.trim() && st.flagVal.trim();
+    const badge = d ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500';
+    const inp = 'bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none';
+    const hb = 'px-3 py-1.5 rounded-lg border border-amber-400 text-amber-600 dark:text-amber-400 text-[11px] font-semibold';
+    return `
+        <div class="flex items-center justify-between gap-2">
+            <b class="text-slate-700 dark:text-slate-200">${tk.id} &mdash; ${esc(pick(tk.title))}</b>
+            <span id="pl2-badge${i}" class="text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap ${badge}">${u2(d ? 'done' : 'active')}</span>
+        </div>
+        ${tk.ctx ? `<div class="text-[11px] italic bg-slate-100 dark:bg-slate-900 rounded-lg p-2 text-slate-600 dark:text-slate-300">${esc(pick(tk.ctx))}</div>` : ''}
+        ${tk.dir ? `<div class="text-[11px] text-slate-500 dark:text-slate-400">${u2('dirHint')} <code class="bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded text-sky-600 dark:text-sky-400">cd ${tk.dir}</code></div>` : ''}
+        <div class="space-y-1">
+            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">${u2('qLabel')}: ${esc(pick(tk.q))}</label>
+            <div class="flex gap-2">
+                <input id="pl2-q${i}" type="text" value="${esc(st.qVal)}" oninput="saveQ(${i})" onchange="pl2Sync()" placeholder="${esc(u2('placeholder'))}" class="flex-1 min-w-0 ${inp} focus:border-sky-500">
+                <button onclick="toggleQHint(${i})" class="${hb}"><i class="fa-solid fa-lightbulb mr-1"></i>${u2('hint')}</button>
+            </div>
+            ${st.showHint ? `<div class="text-[11px] bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg p-2">${esc(pick(tk.qHint))}</div>` : ''}
+        </div>
+        <div class="space-y-1 pt-1 border-t border-slate-200 dark:border-slate-700">
+            <label class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300"><i class="fa-solid fa-flag text-rose-500"></i> ${u2('flagLabel')}</label>
+            <div class="flex gap-2">
+                <input id="pl2-flag${i}" type="text" value="${esc(st.flagVal)}" oninput="saveFlag(${i})" onchange="pl2Sync()" placeholder="${esc(u2('flagPlaceholder'))}" class="flex-1 min-w-0 font-mono ${inp} focus:border-rose-500">
+                <button onclick="toggleFlagHint(${i})" class="${hb}"><i class="fa-solid fa-lightbulb mr-1"></i>${u2('hint')}</button>
+            </div>
+            ${st.showFlagHint ? `<div class="text-[11px] bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg p-2">${esc(pick(tk.flagHint))}</div>` : ''}
+        </div>`;
+}
+function renderTask2(i) {
+    const el = document.getElementById('pl2-task' + i);
+    if (!el) return;
+    el.className = pl2PanelClass(i);
+    el.innerHTML = taskHTML2(i);
+}
+function renderPL2Terminal() {
+    const box = document.getElementById('pl2-screen');
+    if (!box) return;
+    box.innerHTML = pl2.history.map(h => {
+        const cls = h.type === 'cmd' ? 'text-emerald-400' : h.type === 'err' ? 'text-rose-400' : 'text-slate-300';
+        return `<div class="${cls}">${esc(h.text)}</div>`;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+}
+const PL2_RES_UI = {
+    resTitle: ["Yakuniy natija", "Final result"],
+    retry: ["Qaytadan boshlash", "Start over"],
+    hints: ["yordam", "hints"], qWrong: ["xato javob", "wrong answers"], flagWrong: ["xato bayroq", "wrong flags"],
+    levels: [["A'lo", "Excellent"], ["Yaxshi", "Good"], ["Qoniqarli", "Satisfactory"], ["Qayta ko'rib chiqing", "Needs review"]]
+};
+function pl2ResultsHTML() {
+    const pct = pl2TotalScore();
+    const lv = pct >= 90 ? 0 : pct >= 75 ? 1 : pct >= 55 ? 2 : 3;
+    const col = ['emerald', 'sky', 'amber', 'rose'][lv];
+    const colCls = { emerald: 'text-emerald-500 border-emerald-500/40 bg-emerald-500/10', sky: 'text-sky-500 border-sky-500/40 bg-sky-500/10', amber: 'text-amber-500 border-amber-500/40 bg-amber-500/10', rose: 'text-rose-500 border-rose-500/40 bg-rose-500/10' }[col];
+    let h = `<div class="rounded-xl border-2 ${colCls} p-4 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div><div class="text-[10px] uppercase tracking-wider font-bold">${pick(PL2_RES_UI.resTitle)}</div>
+                 <div class="text-3xl font-extrabold">${pct.toFixed(0)}%</div></div>
+            <div class="text-sm font-bold px-3 py-1 rounded-full border ${colCls}">${pick(PL2_RES_UI.levels[lv])}</div>
+        </div>
+        <div class="space-y-2 text-[11px]">`;
+    PL2_TASKS.forEach((t, i) => {
+        const st = pl2.state[i], sc = pl2TaskScore(i);
+        h += `<div class="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 space-y-1">
+            <div class="flex items-center justify-between gap-2"><b>${t.id} &mdash; ${esc(pick(t.title))}</b><span class="font-bold text-emerald-500">${sc}%</span></div>
+            <div class="text-[10px] text-slate-500">${st.hintsUsed} ${pick(PL2_RES_UI.hints)} · ${st.qWrong} ${pick(PL2_RES_UI.qWrong)} · ${st.flagWrong} ${pick(PL2_RES_UI.flagWrong)}</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">${esc(pick(t.why))}</div></div>`;
+    });
+    h += `</div>
+        <button onclick="restartPL2()" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-4 py-2 rounded-lg transition"><i class="fa-solid fa-rotate-right mr-1"></i>${pick(PL2_RES_UI.retry)}</button>
+    </div>`;
+    return h;
+}
+function renderPL2() {
+    const root = document.getElementById('pl-root');
+    if (!root) return;
+    if (!pl2.booted) pl2Boot();
+    let tasksHtml = '<div class="space-y-4 text-xs">';
+    PL2_CATS.forEach((c, ci) => {
+        tasksHtml += `<div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+            <span class="font-bold ${c.txt} uppercase tracking-wider text-[10px]">${c.n}</span>`;
+        PL2_TASKS.forEach((t, i) => { if (t.cat === ci) tasksHtml += `<div id="pl2-task${i}" class="${pl2PanelClass(i)}">${taskHTML2(i)}</div>`; });
+        tasksHtml += '</div>';
+    });
+    tasksHtml += '</div>';
+    const n = pl2AnsweredItems(), tot = PL2_TASKS.length * 2;
+    root.innerHTML = `<div>
+        <h2 class="text-lg font-bold text-amber-600 dark:text-amber-400 mb-1 flex items-center gap-2"><i class="fa-solid fa-terminal"></i> ${pick(["Amaliy Laboratoriya: interaktiv terminal (8 ta Mashq)", "Practical Lab: interactive terminal (8 Exercises)"])}</h2>
+        <p class="text-xs text-slate-500">${pick(["dig, whois, file, sha256sum, strings, grep (-i/-c) va konveyerlardan (|) foydalanib o'zingiz qidiring, so'ng javob va bayroqni yuboring.", "Use dig, whois, file, sha256sum, strings, grep (-i/-c) and pipes (|) to investigate yourself, then submit the answer and flag."])}</p>
+        <div class="mt-3 flex items-center gap-3">
+            <div class="flex-1 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden"><div id="pl2-bar" class="h-full bg-emerald-500 transition-all" style="width:${n / tot * 100}%"></div></div>
+            <span id="pl2-prog" class="text-[11px] font-semibold text-slate-500 whitespace-nowrap">${pick(["Javob berildi", "Answered"])}: ${n} / ${tot}</span>
+        </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <div class="lg:sticky lg:top-20 space-y-2">
+            <div class="rounded-xl overflow-hidden border border-slate-700 bg-[#0d1117] shadow-lg">
+                <div class="h-7 bg-[#161b22] flex items-center px-3 gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#ff5f57]"></span><span class="w-2.5 h-2.5 rounded-full bg-[#febc2e]"></span><span class="w-2.5 h-2.5 rounded-full bg-[#28c840]"></span>
+                    <span class="ml-2 text-[10px] text-slate-400 font-mono">intern@solis — case-notes server</span>
+                </div>
+                <div id="pl2-screen" class="h-80 overflow-y-auto px-3 py-2 font-mono text-[12px] leading-relaxed"></div>
+                <form onsubmit="pl2HandleSubmit(event)" class="flex items-center gap-2 px-3 py-2 border-t border-slate-800">
+                    <span class="font-mono text-[12px] text-amber-400 whitespace-nowrap">${esc(pl2Prompt())}</span>
+                    <input id="pl2-input" type="text" autocomplete="off" class="flex-1 min-w-0 bg-transparent font-mono text-[12px] text-slate-100 focus:outline-none">
+                </form>
+            </div>
+            <div class="text-[10px] text-slate-500 font-mono leading-relaxed">${pick(["buyruqlar:", "commands:"])} ls -a · cd · cat · head/tail · file · sha256sum · strings · dig · whois · grep -i/-c · wc -l · hint &lt;#&gt;</div>
+        </div>
+        <div>${tasksHtml}</div>
+    </div>
+    <div class="flex justify-end"><button onclick="switchTab('result')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs px-5 py-2.5 rounded-lg shadow transition"><i class="fa-solid fa-square-poll-vertical mr-1"></i>${pick(["Results", "Results"])}</button></div>`;
+    renderPL2Terminal();
+}
+function restartPL2() {
+    pl2.cwd = []; pl2.history = []; pl2.booted = false;
+    pl2.state = PL2_TASKS.map(() => ({ qVal: '', qStatus: null, qWrong: 0, qAttempts: 0, flagVal: '', flagStatus: null, flagWrong: 0, flagAttempts: 0, hintsUsed: 0, done: false, showHint: false, showFlagHint: false }));
+    logActivity('[PL2] Laboratoriya qaytadan boshlandi');
+    renderPL2();
+    document.getElementById('pl-root').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ---- Q&A labni ro'yxatga olish va render ----
+const QA_UI = {
+    labTitle: ["Savol-Javob: Ijtimoiy Muhandislik va Phishing (14 ta Mashq)", "Q&A: Social Engineering and Phishing (14 Exercises)"],
+    labSub: ["7 ta yo'nalish bo'yicha har biriga 2 tadan qiyin darajadagi savol. Har birida faqat bitta javob to'g'ri. Natija va tushuntirishlar oxirida chiqadi.", "Two hard-level questions for each of the 7 topics. Only one answer is correct in each. The score and explanations appear at the end."]
+};
+registerLab('qa', QA_CATS, QA_TASKS, QA_UI, 'qa-root', 'qa-lab-results');
+
+function renderAllLabs() {
+    renderLab('qa', QA_UI.labTitle, QA_UI.labSub, 'fa-vial-circle-check');
+    renderPL2();
+    renderResultTab();
+}
+
+// ===================== Natijalar (4 oyna) =====================
+function collectResults() {
+    const qa = LABS.qa, qaItems = qa.tasks.map((t, i) => {
+        const st = qa.state[i];
+        return { id: t.id, cat: t.cat, title: pick(t.title), ans: !!st.pick, ok: isCorrect('qa', i),
+                 yours: st.pick ? st.pick.toUpperCase() : '—', right: correctSide('qa', i).toUpperCase() };
+    });
+    const plItems = [];
+    PL2_TASKS.forEach((t, i) => {
+        const st = pl2.state[i];
+        plItems.push({ id: t.id + ' · ' + pick(["Savol", "Question"]), cat: t.cat, title: pick(t.title), ans: !!st.qVal.trim(), ok: pl2QOk(i), yours: st.qVal.trim() || '—', right: t.answers[0], kind: 'q' });
+        plItems.push({ id: t.id + ' · ' + pick(["Bayroq", "Flag"]), cat: t.cat, title: pick(t.title), ans: !!st.flagVal.trim(), ok: pl2FlagOk(i), yours: st.flagVal.trim() || '—', right: t.flag, kind: 'f' });
+    });
+    return { qaItems, plItems };
+}
+function resCls(it) { return !it.ans ? 'bg-slate-500/10 text-slate-500 border-slate-500/30' : it.ok ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/40' : 'bg-rose-500/10 text-rose-500 border-rose-500/40'; }
+function resMark(it) { return !it.ans ? '—' : it.ok ? '✓' : '✕'; }
+function resBox(title, icon, inner) {
+    return `<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-lg space-y-3">
+        <h3 class="font-bold text-sm text-amber-600 dark:text-amber-400 flex items-center gap-2"><i class="fa-solid ${icon}"></i> ${title}</h3>${inner}</div>`;
+}
+function resBar(c, n, col) { return `<div class="h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden"><div class="h-full ${col}" style="width:${n ? c / n * 100 : 0}%"></div></div>`; }
+function resCount(items) { return items.filter(x => x.ok).length; }
+function resChips(items) { return `<div class="flex flex-wrap gap-1.5">${items.map(it => `<span class="px-1.5 py-0.5 rounded border text-[10px] font-bold ${resCls(it)}">${esc(it.id)} ${resMark(it)}</span>`).join('')}</div>`; }
+function resByCat(items, cats) {
+    return `<div class="grid grid-cols-1 gap-1 text-[11px] text-slate-700 dark:text-slate-200">${cats.map((ct, ci) => {
+        const g = items.filter(x => x.cat === ci);
+        return `<div class="flex justify-between bg-slate-100 dark:bg-slate-900 rounded px-2 py-1"><span>${ct.n}</span><b>${resCount(g)} / ${g.length}</b></div>`;
+    }).join('')}</div>`;
+}
+function resRows(items) {
+    return items.map(it => `<div class="rounded-lg border p-2 ${resCls(it)} text-[11px] space-y-0.5">
+        <div class="flex justify-between gap-2"><b class="text-slate-700 dark:text-slate-200">${esc(it.id)}</b><b>${resMark(it)}</b></div>
+        <div class="text-slate-600 dark:text-slate-300">${pick(["Sizning javobingiz", "Your answer"])}: <b class="break-all">${esc(it.yours)}</b> &nbsp;|&nbsp; ${pick(["To'g'ri javob", "Correct answer"])}: <b class="break-all">${esc(it.right)}</b></div></div>`).join('');
+}
+function resultsReady() { return !!LABS.qa && allDone('qa') && pl2AnsweredItems() === PL2_TASKS.length * 2; }
+function updateResLock() { const l = document.getElementById('res-lock'); if (l) l.classList.toggle('hidden', resultsReady()); }
+function resLockedHTML() {
+    const qn = LABS.qa.tasks.length, qd = doneCount('qa'), pt = PL2_TASKS.length * 2, pd = pl2AnsweredItems();
+    const row = (name, d, n, col) => `<div class="text-left"><div class="flex justify-between mb-1 text-[11px] text-slate-700 dark:text-slate-200"><span>${name}</span><b>${d} / ${n}</b></div>${resBar(d, n, col)}</div>`;
+    return `<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-8 shadow-lg text-center space-y-4 max-w-xl mx-auto opacity-90">
+        <div class="inline-flex p-4 rounded-full bg-slate-500/10 text-slate-400"><i class="fa-solid fa-lock text-3xl"></i></div>
+        <h3 class="font-bold text-lg text-slate-600 dark:text-slate-300">${pick(["Results — yopiq (OFF)", "Results — locked (OFF)"])}</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400">${pick(["Natijalar barcha topshiriqlar yechib bo'lingach ochiladi: Q&A dagi barcha savollarga javob bering va Practical Lab dagi barcha savol hamda bayroqlarni to'ldiring.", "Results unlock once everything is completed: answer all Q&A questions and fill in every question and flag in the Practical Lab."])}</p>
+        <div class="space-y-3">${row('Q&A', qd, qn, 'bg-sky-500')}${row('Practical Lab', pd, pt, 'bg-amber-500')}</div></div>`;
+}
+function renderResultTab() {
+    const root = document.getElementById('res-root');
+    if (!root || !LABS.qa) return;
+    updateResLock();
+    if (!resultsReady()) { root.innerHTML = resLockedHTML(); return; }
+    const { qaItems, plItems } = collectResults();
+    const qc = resCount(qaItems), qn = qaItems.length, pc = resCount(plItems), pn = plItems.length, tc = qc + pc, tn = qn + pn;
+    const pct = (c, n) => n ? Math.round(c / n * 100) : 0;
+    const qq = plItems.filter(x => x.kind === 'q'), ff = plItems.filter(x => x.kind === 'f');
+    const big = (c, n) => `<div class="text-3xl font-extrabold text-slate-800 dark:text-slate-100">${c} / ${n} <span class="text-base font-bold text-slate-500">(${pct(c, n)}%)</span></div>`;
+
+    const w1 = resBox(pick(["1. Umumiy natija", "1. Overall result"]), 'fa-ranking-star', `
+        ${big(tc, tn)}${resBar(tc, tn, 'bg-emerald-500')}
+        <div class="space-y-2 text-[11px] text-slate-700 dark:text-slate-200">
+            <div><div class="flex justify-between mb-1"><span>Q&A</span><b>${qc} / ${qn}</b></div>${resBar(qc, qn, 'bg-sky-500')}</div>
+            <div><div class="flex justify-between mb-1"><span>Practical Lab</span><b>${pc} / ${pn}</b></div>${resBar(pc, pn, 'bg-amber-500')}</div>
+        </div>
+        <div class="flex justify-between items-center bg-slate-100 dark:bg-slate-900 rounded px-2 py-1.5 text-[11px] text-slate-700 dark:text-slate-200"><span><i class="fa-regular fa-clock mr-1"></i>${pick(["Ishlagan vaqt", "Time spent"])}</span><b>${fmtTime(elapsedSec())} (${fmtHuman(elapsedSec())})</b></div>
+        <p class="text-[10px] text-slate-500">${pick(["Javob berilmagan savollar (—) to'g'ri hisoblanmaydi.", "Unanswered items (—) are not counted as correct."])}</p>`);
+    const w2 = resBox(pick(["2. Q&A natijasi", "2. Q&A result"]), 'fa-circle-question', `
+        ${big(qc, qn)}${resBar(qc, qn, 'bg-sky-500')}
+        ${resByCat(qaItems, LABS.qa.cats)}${resChips(qaItems)}`);
+    const w3 = resBox(pick(["3. Practical Lab natijasi", "3. Practical Lab result"]), 'fa-terminal', `
+        ${big(pc, pn)}${resBar(pc, pn, 'bg-amber-500')}
+        <div class="flex gap-2 text-[11px] text-slate-700 dark:text-slate-200">
+            <span class="flex-1 bg-slate-100 dark:bg-slate-900 rounded px-2 py-1">${pick(["Savollar", "Questions"])}: <b>${resCount(qq)} / ${qq.length}</b></span>
+            <span class="flex-1 bg-slate-100 dark:bg-slate-900 rounded px-2 py-1">${pick(["Bayroqlar", "Flags"])}: <b>${resCount(ff)} / ${ff.length}</b></span>
+        </div>
+        ${resByCat(plItems, PL2_CATS)}${resChips(plItems)}`);
+    const w4 = resBox(pick(["4. Batafsil: qaysi javob to'g'ri / noto'g'ri", "4. Details: which answer is correct / incorrect"]), 'fa-list-check', `
+        <div class="max-h-[32rem] overflow-y-auto space-y-3 pr-1">
+            <div class="text-[10px] uppercase tracking-wider font-bold text-slate-500">Q&A</div>${resRows(qaItems)}
+            <div class="text-[10px] uppercase tracking-wider font-bold text-slate-500 pt-2">Practical Lab</div>${resRows(plItems)}
+        </div>`);
+    root.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">${w1}${w2}${w3}${w4}</div>`;
+}
+
+// ===================== Ishga tushirish =====================
+setLang(lang);
+
+</script>
+</body>
+</html>
